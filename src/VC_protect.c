@@ -92,7 +92,7 @@ uint8_t COV_protect()
                 COV_State = ALERT;
 				printf("Alert: COV\n");
             }
-            else
+            else if(COVL_counter > 0)
                 COVL_DEC_counter ++;
             break;
         case ALERT:
