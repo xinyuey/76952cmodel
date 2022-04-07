@@ -1,7 +1,9 @@
 make.exe --dry-run --always-make --keep-going --print-directory
 make.exe: Entering directory 'c:/Users/Lenovo/Desktop/������/Git���زֿ�/76952cmodel'
 gcc -g -Wall -I./include -c  src/register.c -o build/register.o
+ 
 gcc -g -Wall -I./include -c  src/VC_protect.c -o build/VC_protect.o
+ 
 gcc ./build/register.o ./build/VC_protect.o  -o bin/main
 make.exe: Leaving directory 'c:/Users/Lenovo/Desktop/������/Git���زֿ�/76952cmodel'
  

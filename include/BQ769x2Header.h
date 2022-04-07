@@ -1,5 +1,6 @@
 //BQ769x2 General Program Header File
-
+#ifndef BQ76952Header
+#define BQ76952Header
 //Data	Memory	registers	Name in TRM
 #define Cell1Gain 0x9180      //Calibration:Voltage:Cell 1 Gain			
 #define Cell2Gain 0x9182      //Calibration:Voltage:Cell 2 Gain			
@@ -407,3 +408,12 @@
 #define SWAP_TO_I2C 0x29E7
 #define SWAP_TO_SPI 0x7C35
 #define SWAP_TO_HDQ 0x7C40
+
+
+
+
+
+
+
+
+#endif  //条件编译结尾

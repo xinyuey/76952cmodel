@@ -1,3 +1,7 @@
+
+#ifndef COMMON
+#define COMMON
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -67,3 +71,4 @@ void clearFlags(uint8_t data,uint8_t addr);
 // void readData_Memory_Settings(uint16_t addr);
 
 
+#endif
