@@ -7,7 +7,7 @@ make.exe all --print-data-base --no-builtin-variables --no-builtin-rules --quest
 # There is NO WARRANTY, to the extent permitted by law.
  
 
-# Make data base, printed on Fri Apr 08 16:11:20 2022
+# Make data base, printed on Fri Apr 08 16:35:57 2022
 
 # Variables
 
@@ -47,7 +47,9 @@ SHELL := sh.exe
 # environment
 WINDIR = C:\WINDOWS
 # environment
-VSCODE_NLS_CONFIG = {"locale":"zh-cn","availableLanguages":{"*":"zh-cn"},"_languagePackId":"8aee2a6259b28036085891d63c7b68d2.zh-cn","_translationsConfigFile":"C:\\Users\\Lenovo\\AppData\\Roaming\\Code\\clp\\8aee2a6259b28036085891d63c7b68d2.zh-cn\\tcf.json","_cacheRoot":"C:\\Users\\Lenovo\\AppData\\Roaming\\Code\\clp\\8aee2a6259b28036085891d63c7b68d2.zh-cn","_resolvedLanguagePackCoreLocation":"C:\\Users\\Lenovo\\AppData\\Roaming\\Code\\clp\\8aee2a6259b28036085891d63c7b68d2.zh-cn\\e18005f0f1b33c29e81d732535d8c0e47cafb0b5","_corruptedFile":"C:\\Users\\Lenovo\\AppData\\Roaming\\Code\\clp\\8aee2a6259b28036085891d63c7b68d2.zh-cn\\corrupted.info","_languagePackSupport":true}
+VSCODE_NLS_CONFIG = {"locale":"zh-cn","availableLanguages":{"*":"zh-cn"},"_languagePackId":"8aee2a6259b28036085 
+891d63c7b68d2.zh-cn","_translationsConfigFile":"C:\\Users\\Lenovo\\AppData\\Roaming\\Code\\clp\\8aee2a6259b28036085891d63c7b68d2.zh-cn\\tcf.json","_cacheRoot":"C:\\Users\\Lenovo\\AppData\\Roaming\\Code\\clp\\8aee2a6259b28036085891d63c7b68d2.zh-cn","_resolvedLanguagePackCoreLocation":"C:\\Users\\Lenovo\\AppData\\Roaming\\Code\\clp\\8aee2a6259b28036085891d63c7b68d2.zh-cn\\e18005f0f1b33c29e81d732535d8c0e47cafb0b5","_corruptedFile":"C:\\Users\\Lenovo\\AppData\\Roaming\\Code\\clp\\8aee2a6259b28036085891d63c7b68d 
+2.zh-cn\\corrupted.info","_languagePackSupport":true}
 # makefile (from 'makefile', line 14)
 CFLAGS = -g -Wall -I${DIR_INC}
 # environment
@@ -64,7 +66,8 @@ FPS_BROWSER_USER_PROFILE_STRING = Default
 TMP = C:\Users\Lenovo\AppData\Local\Temp\
 # environment
 VSCODE_VERBOSE_LOGGING = true
-# environment
+#  
+environment
 PROGRAMW6432 = C:\Program Files
 # environment
 PROGRAMDATA = C:\ProgramData
@@ -73,7 +76,9 @@ VSCODE_IPC_HOOK_EXTHOST = \\.\pipe\vscode-ipc-48cd6772-f186-48b4-a49a-2a5a8d73b1
 # environment
 VSCODE_CWD = E:\Software\Microsoft VS Code
 # environment
-PATH = C:\Program Files\Common Files\Siemens\Automation\Simatic OAM\bin;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;E:\pjWin64 Crack\runtime\win64;E:\pjWin64 Crack\bin;E:\pjWin64 Crack\polyspace\bin;C:\Program Files\dotnet\;E:\Software\Git\cmd;%QUARTUS_ROOTDIR%\bin;E:\Software\UltraCompare;C:\Users\Lenovo\AppData\Local\Programs\Python\Python36-32\python.exe;C:\Users\Lenovo\AppData\Local\Programs\Python\Python36-32\Scripts\;C:\Users\Lenovo\AppData\Local\Programs\Python\Python36-32\;C:\Program Files (x86)\OpenCV\bin;E:\BaiduNetdiskDownload\win64;C:\Users\Lenovo\.dotnet\tools;C:\Users\Lenovo\AppData\Local\Microsoft\WindowsApps;C:\Program Files\Bandizip\;E:\Software\Microsoft VS Code\bin;C:\MinGW\bin;
+PATH = C:\Program Files\Common Files\Siemens\Automation\Simatic OAM\bin;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;E:\pjWin64 Crack\runtime\win64;E:\pjWin64 Crack\bin 
+;E:\pjWin64 Crack\polyspace\bin;C:\Program Files\dotnet\;E:\Software\Git\cmd;%QUARTUS_ROOTDIR%\bin;E:\Software\UltraCompare;C:\Users\Lenovo\AppData\Local\Programs\Python\Python36-32\python.exe;C:\Users\Lenovo\AppData\Local\Programs\Python\Python36-32\Scripts\;C:\Users\Lenovo\AppData\Local\Programs\Python\Python36-32\;C:\Program Files (x86)\OpenCV\bin;E:\BaiduNetdiskDownload\win64;C:\Users\Lenovo\.dotnet\tools;C:\Users\Lenovo\AppData\Local\Microsoft\WindowsApps;C:\Program Files\Bandizip\;E:\Software\Microsof 
+t VS Code\bin;C:\MinGW\bin;
 # environment
 SIMATIC_OAM_DATA = C:\ProgramData\Siemens\Automation\Simatic OAM
 # environment
@@ -90,8 +95,7 @@ SIMATIC_OAM = C:\Program Files\Common Files\Siemens\Automation\Simatic OAM
 SOPC_KIT_NIOS2 = E:\Software\QUARTUS_NIOS\quartus\nios2eds
 # environment
 VSCODE_LOG_STACK = false
-# env 
-ironment
+# environment
 NUMBER_OF_PROCESSORS = 4
 # environment
 ELECTRON_RUN_AS_NODE = 1
@@ -108,7 +112,8 @@ COMPUTERNAME = LAPTOP-3VL4VRID
 # environment
 PROGRAMFILES = C:\Program Files (x86)
 # environment
-DRIVERDATA = C:\Windows\System32\Drivers\DriverData
+DRIVERDATA = C:\Windows\System32\Drivers\DriverD 
+ata
 # environment
 ASL.LOG = Destination=file
 # environment
@@ -124,8 +129,7 @@ KMP_DUPLICATE_LIB_OK = TRUE
 # environment
 VSCODE_AMD_ENTRYPOINT = vs/workbench/api/node/extensionHostProcess
 # environment
-VSCODE_CODE_CACHE_PATH = C:\Users\Lenovo\AppData\Roaming\Code\CachedData\e18005f0f1b33c29e81d732535d8c0e 
-47cafb0b5
+VSCODE_CODE_CACHE_PATH = C:\Users\Lenovo\AppData\Roaming\Code\CachedData\e18005f0f1b33c29e81d732535d8c0e47cafb0b5
 # environment
 APPLICATION_INSIGHTS_NO_DIAGNOSTIC_CHANNEL = 1
 # environment
@@ -146,7 +150,8 @@ MAKELEVEL := 0
 MAKE = $(MAKE_COMMAND)
 # default
 MAKECMDGOALS := all
-# makefile (from 'makefile', line 13)
+# makef 
+ile (from 'makefile', line 13)
 CC = gcc
 # default
 MAKE_VERSION := 3.82.90
@@ -163,8 +168,7 @@ LOCALAPPDATA = C:\Users\Lenovo\AppData\Local
 # makefile (from 'makefile', line 3)
 DIR_OBJ = ./build
 # environment
-PSMODULEPATH = C:\Program Files\WindowsPowerShell\Modules;C:\WINDOWS\system32\WindowsPowerShell\v1.0 
-\Modules
+PSMODULEPATH = C:\Program Files\WindowsPowerShell\Modules;C:\WINDOWS\system32\WindowsPowerShell\v1.0\Modules
 # default
 MAKE_COMMAND := make.exe
 # environment
@@ -184,7 +188,8 @@ VSCODE_IPC_HOOK = \\.\pipe\0fef3a94d6096a0b1a9a5118139e1cab-1.66.0-main-sock
 # environment
 HOMEPATH = \Users\Lenovo
 # environment
-COMMONPROGRAMFILES(X86) = C:\Program Files (x86)\Common Files
+COMMONPROGRAMFILES(X86) = C:\Program Files (x86)\ 
+Common Files
 # environment
 PROMPT = $P$G
 # environment
@@ -237,7 +242,8 @@ LANG = C
 # environment
 PROCESSOR_LEVEL = 6
 # environment
-FPS_BROWSER_APP_PROFILE_STRING = Internet Explorer
+FPS_BROWSER_A 
+PP_PROFILE_STRING = Internet Explorer
 # environment
 VSCODE_PID = 13700
 # environment
@@ -253,8 +259,7 @@ USERDOMAIN_ROAMINGPROFILE = LAPTOP-3VL4VRID
 
 # Directories
 
-# C:\Users\Lenovo\AppData\Local\Microsoft\WindowsApps (key C:/Users/Lenovo/AppData/Local/Microsoft/WindowsApps, mtime 1647921091): 13 files, no impossibilities 
-.
+# C:\Users\Lenovo\AppData\Local\Microsoft\WindowsApps (key C:/Users/Lenovo/AppData/Local/Microsoft/WindowsApps, mtime 1647921091): 13 files, no impossibilities.
 # E:\Software\UltraCompare (key E:/Software/UltraCompare, mtime 1619092515): 34 files, no impossibilities.
 # E:\pjWin64 Crack\polyspace\bin (key E:/pjWin64 Crack/polyspace/bin, mtime 1572449333): 43 files, no impossibilities.
 # C:\WINDOWS\System32\WindowsPowerShell\v1.0\ (key C:/WINDOWS/System32/WindowsPowerShell/v1.0/, mtime 1620063906): 31 files, no impossibilities.
@@ -274,13 +279,11 @@ bin (key C:/MinGW/bin, mtime 1649259016): 94 files, no impossibilities.
 # E:\pjWin64 Crack\runtime\win64 (key E:/pjWin64 Crack/runtime/win64, mtime 1572449256): 7 files, no impossibilities.
 # C:\WINDOWS\System32\Wbem (key C:/WINDOWS/System32/Wbem, mtime 1646150867): 155 files, no impossibilities.
 # C:\Users\Lenovo\AppData\Local\Programs\Python\Python36-32\ (key C:/Users/Lenovo/AppData/Local/Programs/Python/Python36-32/, mtime 1619522029): 20 files, no impossibilities.
-# C:\Program Files\Common Files\Siemens\Automation\Simatic OAM\bin (key C:/Program Files/Common Files/Siem 
-ens/Automation/Simatic OAM/bin, mtime 1540194915): 35 files, no impossibilities.
+# C:\Program Files\Common Files\Siemens\Automation\Simatic OAM\bin (key C:/Program Files/Common Files/Siemens/Automation/Simatic OAM/bin, mtime 1540194915): 35 files, no impossibilities.
 # C:\Users\Lenovo\AppData\Local\Programs\Python\Python36-32\Scripts\ (key C:/Users/Lenovo/AppData/Local/Programs/Python/Python36-32/Scripts/, mtime 1507376989): 14 files, no impossibilities.
 # src (key c:/Users/Lenovo/Desktop/������/Git���زֿ�/76952cmodel/src, mtime 1649341142): 7 files, no impossibilities.
 # C:\Program Files\dotnet\ (key C:/Program Files/dotnet/, mtime 1602690669): 9 files, no impossibilities.
-# E:\BaiduNetdi 
-skDownload\win64: could not be stat'd.
+# E:\BaiduNetdiskDownload\win64: could not be stat'd.
 # C:\WINDOWS\system32 (key C:/WINDOWS/system32, mtime 1648136980): 3251 files, no impossibilities.
 # E:\Software\Microsoft VS Code\bin (key E:/Software/Microsoft VS Code/bin, mtime 1649254677): 4 files, no impossibilities.
 
@@ -298,7 +301,6 @@ build/%.o: src/%.c
 
 # Not a target:
 build/main.o:
- 
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
@@ -319,7 +321,8 @@ all:
 build/VC_protect.o:
 #  Implicit rule search has not been done.
 #  Modification time never checked.
-#  File has not been updated.
+#  File has not been upd 
+ated.
 
 # Not a target:
 build/OC_protect.o:
@@ -336,14 +339,13 @@ build/OC_protect.o:
 # Not a target:
 makefile:
 #  Implicit rule search has been done.
-#  Last modified 2022-04-08 16:11:04
+#  Last modified 2022-04-08 16:35:03
 #  File has been updated.
 #  Successfully updated.
 
 # Not a target:
 .DEFAULT:
-#  Implicit rule search has not been done. 
-
+#  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
 
@@ -353,14 +355,14 @@ clean:
 #  File does not exist.
 #  File has not been updated.
 #  recipe to execute (from 'makefile', line 23):
-	rm -r -fo ${DIR_OBJ}/*.o
+	@del .\build\*.o
+	@del .\bin\*.exe
 
 bin/main: build/register.o build/main.o build/OC_protect.o build/VC_protect.o build/Balance.o
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
-#  recipe to execut 
-e (from 'makefile', line 17):
+#  recipe to execute (from 'makefile', line 17):
 	$(CC) $(OBJ)  -o $@
 
 # Not a target:
@@ -381,10 +383,10 @@ build/register.o:
 
 # No 'vpath' search paths.
 
-# No general ('VPATH' variable) search path.
+# No general ('VPATH' variable) search  
+path.
 
-# s 
-trcache buffers: 8 (7) / strings = 3913 / storage = 58319 B / avg = 14 B
+# strcache buffers: 8 (7) / strings = 3913 / storage = 58319 B / avg = 14 B
 # current buf: size = 8174 B / used = 1165 B / count = 91 / avg = 12 B
 # other used: total = 50145 B / count = 3822 / avg = 13 B
 # other free: total = 64 B / max = 15 B / min = 4 B / avg = 9 B
@@ -392,7 +394,7 @@ trcache buffers: 8 (7) / strings = 3913 / storage = 58319 B / avg = 14 B
 # strcache performance: lookups = 3993 / hit rate = 2%
 # hash-table stats:
 # Load=3913/8192=48%, Rehash=0, Collisions=1566/3993=39%
-# Finished Make data base on Fri Apr 08 16:11:20 2022
+# Finished Make data base on Fri Apr 08 16:35:57 2022
 
  
 make.exe: *** No rule to make target 'all'.  Stop.

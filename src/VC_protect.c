@@ -79,7 +79,7 @@ uint8_t COV_protect()
             {
                 COV_counter ++;
                 COV_State = ALERT;
-				printf("Alert: COV\n");
+				printf("\nAlert: COV\n");
             }
             else
                 COVL_DEC_counter ++;
@@ -90,7 +90,7 @@ uint8_t COV_protect()
             {
                 COV_counter = 0;
                 COV_State = TRIP;
-				printf("Error: COV\n");
+				printf("\nError: COV\n");
                 if(COVL_State != LATCH_TRIP)    //COVL触发后就不计数了
                     COVL_counter ++;    //放在这是为识别COV_Fault上升沿，即COV_Fault上升沿计数值达到锁存阈值，会触发COVL
             }    
@@ -110,7 +110,7 @@ uint8_t COV_protect()
                 COV_recounter = 0;
                 COVL_DEC_counter = 0;
                 COV_State = NORMAL;
-				printf("Recovery: COV\n");
+				printf("\nRecovery: COV\n");
             }   
             else if(!COV_Comp(COV_TH - COV_REC))
             {
@@ -125,6 +125,7 @@ uint8_t COV_protect()
         default:
             break;
     }
+    return 0;
      
 }
 
@@ -140,7 +141,7 @@ uint8_t CUV_protect()
             {
                 CUV_counter ++;
                 CUV_State = ALERT;
-				printf("Alert: CUV\n");
+				printf("\nAlert: CUV\n");
             }
             break;
         case ALERT:
@@ -149,7 +150,7 @@ uint8_t CUV_protect()
             {
                 CUV_counter = 0;
                 CUV_State = TRIP;
-				printf("Error: CUV\n");
+				printf("\nError: CUV\n");
             }    
             else if (!CUV_Comp(CUV_TH))
             {
@@ -167,7 +168,7 @@ uint8_t CUV_protect()
             {
                 CUV_recounter = 0;
                 CUV_State = NORMAL;
-				printf("Recovery: CUV\n");
+				printf("\nRecovery: CUV\n");
             }   
             else if(!CUV_Comp(CUV_TH + CUV_REC))
             {
@@ -182,6 +183,7 @@ uint8_t CUV_protect()
         default:
             break;
     }
+    return 0;
 
 }
 
@@ -195,7 +197,7 @@ uint8_t COVL_protect()
             if(COVL_counter > 0)
             {
 				COVL_State = LATCH_ALERT;
-				printf("Alert: COV Latch\n");
+				printf("\nAlert: COV Latch\n");
 			}
             break;
         case LATCH_ALERT:
@@ -204,7 +206,7 @@ uint8_t COVL_protect()
             {
                 COVL_counter = 0;
                 COVL_State = LATCH_TRIP;
-				printf("Error: COV Latch\n");
+				printf("\nError: COV Latch\n");
             }
             else if(COVL_counter == 0)
                 COVL_State = LATCH_RESET;
@@ -218,7 +220,7 @@ uint8_t COVL_protect()
             {
                 COVL_REC_counter = 0;
                 COVL_State = LATCH_RESET;
-				printf("Recovery: COV Latch\n");
+				printf("\nRecovery: COV Latch\n");
             } 
             else
                 COVL_REC_counter ++;    //COVL故障定时自动恢复
@@ -226,5 +228,6 @@ uint8_t COVL_protect()
         default:
             break;
     }
+    return 0;
 
 }

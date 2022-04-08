@@ -13,6 +13,7 @@
 
 typedef unsigned char       uint8_t;    //1 byte
 typedef unsigned short int  uint16_t;   //2 bytes
+typedef short int           int16_t;   //2 bytes
 typedef unsigned int        uint32_t;   //4 bytes
 
 typedef enum{

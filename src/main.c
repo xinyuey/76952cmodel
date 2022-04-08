@@ -1,7 +1,15 @@
 #include "common.h"
 
 
+
+uint8_t COV_protect();
+uint8_t CUV_protect();
+uint8_t COVL_protect();
+
+
 uint16_t CellVoltage [16] = {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
+uint16_t charger,LD;
+int16_t  current;
 
 int input_counter = 0;
 
@@ -9,12 +17,13 @@ void BQ76952_Vcell(FILE* file)
 {
     for(int i=0;i<16;i++)
     {
-        fscanf(file,"%d",&CellVoltage[i]);
+        fscanf(file,"%hu",&CellVoltage[i]);
 		writeDirectMemory(CellVoltage[i],0x14 + i*2);
 //		readDirectMemory(0X14 + i*2);
     }
-    
-//	printf("\n Next input %d... ...\n",input_counter);
+    fscanf(file,"%hd",&current);
+    fscanf(file,"%hu",&charger);
+    fscanf(file,"%hu",&LD);
 }
 
 void BQ76952_Init()
@@ -23,27 +32,29 @@ void BQ76952_Init()
     initMemory();
 }
 
-void PrintVcell()
+void Print_input()
 {
     for(int i=0;i<16;i++)
     {
-        printf("VC%-6d",i+1);
+        printf("VC%-4d",i+1);
     }
+    printf("Vic");
     printf("\n");
     for(int i=0;i<16;i++)
     {
-        printf("%-8d",CellVoltage[i]);
+        printf("%-6hu",CellVoltage[i]);
     }
+    printf(" %-6hd",current);
     printf("\n");
 }
 
-uint8_t main(int argc,char* argv)
+int main()
 {
     
     BQ76952_Init();
 
     FILE *fp;
-    fp = fopen("../sim/COV_COVL_TEST.txt","r");    //testcase自定义Vcell
+    fp = fopen("../sim/TEST_case.txt","r");    //testcase自定义Vcell
     //fp = fopen("CUV_TEST.txt","r");
     //fp = fopen("SUPPLY_TEST.txt","r");
     if(fp==NULL)
@@ -57,8 +68,11 @@ uint8_t main(int argc,char* argv)
     while (!feof(fp))
     //while(1)
     {
+        input_counter++;
+	    printf("\nNext input %d... ...\n",input_counter);
+
         BQ76952_Vcell(fp);  //Supply to VC1-VC16
-        //PrintVcell();
+        Print_input();
         CUV_protect();
 		//readDirectMemory(SafetyAlertA);
 		//readDirectMemory(SafetyStatusA);
