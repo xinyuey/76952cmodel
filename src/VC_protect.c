@@ -79,7 +79,7 @@ uint8_t CUV_Comp(uint16_t threshold)
         return 0;
 }
 
-uint8_t COV_protect()
+void COV_protect()
 {
     switch (COV_State)
     {
@@ -139,7 +139,7 @@ uint8_t COV_protect()
      
 }
 
-uint8_t CUV_protect()
+void CUV_protect()
 {
     switch (CUV_State)
     {
@@ -196,7 +196,7 @@ uint8_t CUV_protect()
 
 }
 
-uint8_t COVL_protect()
+void COVL_protect()
 {
     switch (COVL_State)
     {
@@ -257,7 +257,7 @@ void BQ76952_Init()
     initMemory();
 }
 
-uint8_t main(int argc,char* argv)
+int main()
 {
     
     BQ76952_Init();
@@ -268,14 +268,12 @@ uint8_t main(int argc,char* argv)
     //fp = fopen("SUPPLY_TEST.txt","r");
     if(fp==NULL)
     {  
-		printf("File cannot open! " );  
-		//exit;  
+		printf("File cannot open! " );   
 		return 0;
 	}
 
-		
+	//while(1)	
     while (!feof(fp))
-    //while(1)
     {
         BQ76952_Vcell(fp);  //Supply to VC1-VC16
         //PrintVcell();
@@ -291,14 +289,12 @@ uint8_t main(int argc,char* argv)
 		//readDirectMemory(SafetyAlertC);
 		//readDirectMemory(SafetyStatusC);
     }
-
-	uint8_t command;
+	
 	while(1)
 	{
-			printf("waiting for command......\n");
-			scanf("%x",&command);
-			readDirectMemory(command);
+		Command_Sequence();		
 			
 	}
-    
+	
+    return 0;
 }
