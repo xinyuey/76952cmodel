@@ -37,19 +37,7 @@ StateMachine COV_State = NORMAL;
 StateMachine CUV_State = NORMAL;
 StateMachine_Lacth COVL_State = LATCH_RESET;
 
-void PrintVcell()
-{
-    for(int i=0;i<16;i++)
-    {
-        printf("VC%-6d",i+1);
-    }
-    printf("\n");
-    for(int i=0;i<16;i++)
-    {
-        printf("%-8d",CellVoltage[i]);
-    }
-    printf("\n");
-}
+
 
 uint8_t COV_Comp(uint16_t threshold)
 {

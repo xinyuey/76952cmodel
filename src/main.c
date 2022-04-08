@@ -3,6 +3,8 @@
 
 uint16_t CellVoltage [16] = {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
 
+int input_counter = 0;
+
 void BQ76952_Vcell(FILE* file)
 {
     for(int i=0;i<16;i++)
@@ -11,13 +13,28 @@ void BQ76952_Vcell(FILE* file)
 		writeDirectMemory(CellVoltage[i],0x14 + i*2);
 //		readDirectMemory(0X14 + i*2);
     }
-	
+    
+//	printf("\n Next input %d... ...\n",input_counter);
 }
 
 void BQ76952_Init()
 {
     printf("\n*****  BQ76952 Funtion Model  *****\n\n");
     initMemory();
+}
+
+void PrintVcell()
+{
+    for(int i=0;i<16;i++)
+    {
+        printf("VC%-6d",i+1);
+    }
+    printf("\n");
+    for(int i=0;i<16;i++)
+    {
+        printf("%-8d",CellVoltage[i]);
+    }
+    printf("\n");
 }
 
 uint8_t main(int argc,char* argv)
@@ -42,7 +59,6 @@ uint8_t main(int argc,char* argv)
     {
         BQ76952_Vcell(fp);  //Supply to VC1-VC16
         //PrintVcell();
-
         CUV_protect();
 		//readDirectMemory(SafetyAlertA);
 		//readDirectMemory(SafetyStatusA);
