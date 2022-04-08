@@ -20,4 +20,4 @@ ${DIR_OBJ}/%.o:${DIR_SRC}/%.c
 	$(CC) $(CFLAGS) -c  $< -o $@
 .PHONY:clean
 clean:
-	find ${DIR_OBJ} -name *.o -exec rm -rf {}
+	find ${DIR_OBJ} -name *.o -exec rm -rf {} \; 

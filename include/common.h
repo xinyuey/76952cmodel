@@ -1,3 +1,6 @@
+#ifndef COMMON
+#define COMMON
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -91,4 +94,4 @@ void Command_Sequence();
 // void readData_Memory_Settings(uint16_t addr);
 //void writeData_Memory_Settings(uint32_t data, uint16_t addr);
 
-
+#endif
