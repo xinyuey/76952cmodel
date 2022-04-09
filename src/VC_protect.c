@@ -1,5 +1,5 @@
 /*OV UV*/
-/*git test*/
+
 #include "common.h"
 
 #define COV_ALERT BIT(3)
@@ -9,7 +9,7 @@
 #define COVL_ALERT BIT(4)
 #define COVL_FAULT BIT(4)
 
-extern  uint16_t CellVoltage[];
+extern uint16_t CellVoltage[];
 
 uint16_t CUV_TH = 3000;         
 uint16_t COV_TH = 5000; 
@@ -25,7 +25,6 @@ uint8_t CUV_recounter = 0;      //COV恢复事件计数
 uint8_t RecoveryTime = 30;      //保护的恢复延时
 
 uint8_t COVL_Limit = 4;        
-
 uint8_t COVL_DEC_DLY = 100; 
 uint8_t COVL_RecoveryTime = 150;
 
@@ -68,7 +67,7 @@ uint8_t CUV_Comp(uint16_t threshold)
         return 0;
 }
 
-uint8_t COV_protect()
+void COV_protect()
 {
     switch (COV_State)
     {
@@ -81,7 +80,7 @@ uint8_t COV_protect()
                 COV_State = ALERT;
 				printf("\nAlert: COV\n");
             }
-            else
+            else if(COVL_counter > 0)
                 COVL_DEC_counter ++;
             break;
         case ALERT:
@@ -129,7 +128,7 @@ uint8_t COV_protect()
      
 }
 
-uint8_t CUV_protect()
+void CUV_protect()
 {
     switch (CUV_State)
     {
@@ -187,7 +186,7 @@ uint8_t CUV_protect()
 
 }
 
-uint8_t COVL_protect()
+void COVL_protect()
 {
     switch (COVL_State)
     {

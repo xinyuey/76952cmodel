@@ -1,5 +1,8 @@
 #include "common.h"
 
+uint8_t COV_protect();
+uint8_t CUV_protect();
+uint8_t COVL_protect();
 
 
 uint8_t COV_protect();
@@ -21,9 +24,32 @@ void BQ76952_Vcell(FILE* file)
 		writeDirectMemory(CellVoltage[i],0x14 + i*2);
 //		readDirectMemory(0X14 + i*2);
     }
+<<<<<<< HEAD
     fscanf(file,"%hd",&current);
     fscanf(file,"%hu",&charger);
     fscanf(file,"%hu",&LD);
+=======
+
+    /*fscanf(file,"%hd",&current);
+    fscanf(file,"%hu",&charger);
+    fscanf(file,"%hu",&LD);*/
+}
+
+void Print_input()
+{
+    for(int i=0;i<16;i++)
+    {
+        printf("VC%-4d",i+1);
+    }
+    printf("Vic");
+    printf("\n");
+    for(int i=0;i<16;i++)
+    {
+        printf("%-6hu",CellVoltage[i]);
+    }
+    printf(" %-6hd",current);
+    printf("\n");
+>>>>>>> master
 }
 
 void BQ76952_Init()
@@ -68,11 +94,21 @@ int main()
     while (!feof(fp))
     //while(1)
     {
+<<<<<<< HEAD
         input_counter++;
 	    printf("\nNext input %d... ...\n",input_counter);
 
         BQ76952_Vcell(fp);  //Supply to VC1-VC16
         Print_input();
+=======
+        /*
+        input_counter++;
+	    printf("\nNext input %d... ...\n",input_counter);*/
+
+        BQ76952_Vcell(fp);  //Supply to VC1-VC16
+
+        //Print_input();
+>>>>>>> master
         CUV_protect();
 		//readDirectMemory(SafetyAlertA);
 		//readDirectMemory(SafetyStatusA);
@@ -85,13 +121,10 @@ int main()
 		//readDirectMemory(SafetyStatusC);
     }
 
-	uint8_t command;
 	while(1)
 	{
-			printf("waiting for command......\n");
-			scanf("%x",&command);
-			readDirectMemory(command);
-			
+		Command_Sequence();
 	}
-    
+	
+	return 0;    
 }
