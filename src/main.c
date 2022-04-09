@@ -8,10 +8,10 @@ uint8_t COVL_protect();
 
 
 uint16_t CellVoltage [16] = {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
-uint16_t charger,LD;
-int16_t  current;
+uint16_t charger,LD;                            //充电器检测结果与负载检测结果
+int16_t  current;                               //电流结果输入
 
-int input_counter = 0;
+int input_counter = 0;                          //用于输入向量的计数
 
 void BQ76952_Vcell(FILE* file)
 {

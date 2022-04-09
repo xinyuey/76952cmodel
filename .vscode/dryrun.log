@@ -1,6 +1,0 @@
-make.exe --dry-run --keep-going --print-directory
-make.exe: Entering directory 'c:/Users/Lenovo/Desktop/������/Git���زֿ�/76952cmodel'
-gcc ./build/register.o ./build/main.o ./build/OC_protect.o ./build/VC_protect.o ./build/Balance.o  -o bin/main
- 
-make.exe: Leaving directory 'c:/Users/Lenovo/Desktop/������/Git���زֿ�/76952cmodel'
- 
