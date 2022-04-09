@@ -1,17 +1,43 @@
 #include "common.h"
 
+uint8_t COV_protect();
+uint8_t CUV_protect();
+uint8_t COVL_protect();
 
 uint16_t CellVoltage [16] = {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
+uint16_t charger,LD;                            //充电器检测结果与负载检测结果
+int16_t  current;                               //电流结果输入
+
+int input_counter = 0;                          //用于输入向量的计数
 
 void BQ76952_Vcell(FILE* file)
 {
     for(int i=0;i<16;i++)
     {
-        fscanf(file,"%d",&CellVoltage[i]);
+        fscanf(file,"%hu",&CellVoltage[i]);
 		writeDirectMemory(CellVoltage[i],0x14 + i*2);
 //		readDirectMemory(0X14 + i*2);
     }
-	
+
+    /*fscanf(file,"%hd",&current);
+    fscanf(file,"%hu",&charger);
+    fscanf(file,"%hu",&LD);*/
+}
+
+void Print_input()
+{
+    for(int i=0;i<16;i++)
+    {
+        printf("VC%-4d",i+1);
+    }
+    printf("Vic");
+    printf("\n");
+    for(int i=0;i<16;i++)
+    {
+        printf("%-6hu",CellVoltage[i]);
+    }
+    printf(" %-6hd",current);
+    printf("\n");
 }
 
 void BQ76952_Init()
@@ -40,9 +66,13 @@ uint8_t main(int argc,char* argv)
     while (!feof(fp))
     //while(1)
     {
-        BQ76952_Vcell(fp);  //Supply to VC1-VC16
-        //PrintVcell();
+        /*
+        input_counter++;
+	    printf("\nNext input %d... ...\n",input_counter);*/
 
+        BQ76952_Vcell(fp);  //Supply to VC1-VC16
+
+        //Print_input();
         CUV_protect();
 		//readDirectMemory(SafetyAlertA);
 		//readDirectMemory(SafetyStatusA);
