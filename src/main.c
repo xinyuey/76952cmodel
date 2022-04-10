@@ -1,14 +1,14 @@
 #include "common.h"
 
-uint8_t COV_protect();
-uint8_t CUV_protect();
-uint8_t COVL_protect();
+void COV_protect();
+void CUV_protect();
+void COVL_protect();
 
 
-uint8_t COV_protect();
-uint8_t CUV_protect();
-uint8_t COVL_protect();
-
+void COV_protect();
+void CUV_protect();
+void COVL_protect();
+void Command_Sequence();
 
 uint16_t CellVoltage [16] = {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
 uint16_t charger,LD;                            //充电器检测结果与负载检测结果

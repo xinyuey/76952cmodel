@@ -124,7 +124,6 @@ void COV_protect()
         default:
             break;
     }
-    return 0;
      
 }
 
@@ -182,7 +181,6 @@ void CUV_protect()
         default:
             break;
     }
-    return 0;
 
 }
 
@@ -227,6 +225,5 @@ void COVL_protect()
         default:
             break;
     }
-    return 0;
 
 }

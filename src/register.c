@@ -244,7 +244,7 @@ int Buffer_data_to_Reg(int info,uint8_t data_length)
 
 int ComSubCommand(int info)
 {
-	;
+	return 0;
 }
 
 void SubCommand()
