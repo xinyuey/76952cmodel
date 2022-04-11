@@ -6,9 +6,9 @@
 // Settings:Protection:Enabled Protections B	 OTF     OTINT   OTD     OTC     RSVD_0  UTINT   UTD      UTC	
 // Settings:Protection:Enabled Protections C	 OCD3    SCDL    OCDL    COVL    RSVD    PTO     HWDF     RSVD_0	
 // Protections:OCC:Threshold                     8  bits                                                                                                 
-// Protections:OCC:Delay		                 8  bits                                                                 
+// Protections:OCC:Delay                         8  bits                                                                 
 // Protections:OCC:Recovery Threshold	         16 bits                                                                         
-// Protections:OCC:PACK-TOS Delta			     16 bits                                                                             
+// Protections:OCC:PACK-TOS Delta                16 bits                                                                             
 // Protections:OCD1:Threshold                    8  bits                                                              
 // Protections:OCD1:Delay                        8  bits                                                          
 // Protections:OCD2:Threshold                    8  bits                                                              
