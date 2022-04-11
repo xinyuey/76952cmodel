@@ -4,10 +4,8 @@ void COV_protect();
 void CUV_protect();
 void COVL_protect();
 
-
-void COV_protect();
-void CUV_protect();
-void COVL_protect();
+void SCD_protect();
+void SCDL_protect();
 void Command_Sequence();
 
 uint16_t CellVoltage [16] = {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
@@ -25,9 +23,9 @@ void BQ76952_Vcell(FILE* file)
 //		readDirectMemory(0X14 + i*2);
     }
 
-    /*fscanf(file,"%hd",&current);
+    fscanf(file,"%hd",&current);
     fscanf(file,"%hu",&charger);
-    fscanf(file,"%hu",&LD);*/
+    fscanf(file,"%hu",&LD);
 }
 
 
@@ -59,9 +57,10 @@ int main()
     BQ76952_Init();
 
     FILE *fp;
-    fp = fopen("../sim/COV_COVL_TEST.txt","r");    //testcase自定义Vcell
-    //fp = fopen("CUV_TEST.txt","r");
-    //fp = fopen("SUPPLY_TEST.txt","r");
+    //fp = fopen("../sim/COV_COVL_TEST.txt","r");    //testcase自定义Vcell
+    //fp = fopen("../sim/CUV_TEST.txt","r");
+    //fp = fopen("../sim/SUPPLY_TEST.txt","r");
+    fp = fopen("../sim/TEST_case.txt","r");
     if(fp==NULL)
     {  
 		printf("File cannot open! " );  
@@ -90,6 +89,9 @@ int main()
 		//readDirectMemory(SafetyStatusA);
 		//readDirectMemory(SafetyAlertC);
 		//readDirectMemory(SafetyStatusC);
+
+        SCD_protect();
+        SCDL_protect();
     }
 
 	while(1)
