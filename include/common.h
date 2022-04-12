@@ -10,11 +10,12 @@
 
 #define BIT(n) 1 << n
 
-typedef unsigned char       uint8_t;    //1 byte
-typedef unsigned short int  uint16_t;   //2 bytes
-typedef short int           int16_t;   //2 bytes
-typedef unsigned int        uint32_t;   //4 bytes
-typedef short int           int16_t;   //2 bytes
+typedef unsigned char       uint8_t;    	//1 byte
+typedef unsigned short int  uint16_t;   	//2 bytes
+typedef short int           int16_t;   		//2 bytes
+typedef unsigned int        uint32_t; 		//4 bytes
+typedef int           		int32_t;   		//4 bytes
+
 typedef enum{
         NORMAL=1,
         ALERT,
@@ -27,26 +28,38 @@ typedef enum{
         LATCH_TRIP
         }StateMachine_Lacth;
 
-#define SIZE_OF_DIRECT 86					//直接命令
+#define SIZE_OF_DIRECT 135					//直接命令
 #define SIZE_OF_SETTING 272					//配置
 #define SIZE_OF_DATASUB 32					//数据相关子命令
 #define SIZE_OF_COMSUB 46					//仅命令子命令
 
-#define SIZE_OF_COMMAND 20					//命令名字长度
+#define SIZE_OF_COMMAND 30					//命令名字长度
 #define SIZE_OF_DATA_BUFFER 32				//0x40-5f长度
 
-
+typedef union{
+	uint16_t data_u;
+	int16_t data_i;
+	}mem16_t;
+	
+typedef union{
+	uint8_t data_u[SIZE_OF_DATA_BUFFER];
+	int8_t data_i[SIZE_OF_DATA_BUFFER];
+	}mem8_t;	
+	
 struct RAM_DIRECT{           	   			//直接命令寄存器
         char name[SIZE_OF_COMMAND];
+		//int data_format;
+		//int data_length;
         uint8_t addr;           			//0x00-0xff地址
         uint16_t data;          			//16位数据
 };
 
 struct RAM_DATASUB{                 		//间接命令寄存器
 		char name[SIZE_OF_COMMAND];
+		int data_format;
 		int data_length;
         uint16_t addr;          			//0x0000-0xffff地址
-        uint8_t data[SIZE_OF_DATA_BUFFER];          			//32字节数据   
+        mem8_t data;  						//32字节数据   
 };
 
 struct RAM_COMSUB{                 			//间接命令寄存器
@@ -55,8 +68,11 @@ struct RAM_COMSUB{                 			//间接命令寄存器
 };
 
 struct DATA_MEMORY_SETTINGS{    			//配置寄存器
+		char name[SIZE_OF_COMMAND];
+//		int data_format;
+		int data_length;
         uint16_t addr;          			//0x0000-0xffff地址
-        uint32_t data;          			//32位数据
+        uint8_t data[SIZE_OF_DATA_BUFFER];  //32字节数据
 };
 
 struct MemoryManager{
@@ -84,14 +100,6 @@ int ComSubCommand(int info);
 void SubCommand();
 void Command_Sequence();
 
-//int Command_SubMemory(uint16_t addr);
-//void Data_SubMemory(uint16_t addr,uint16_t data,uint8_t type);
-//void write_Data_SubMemory(uint16_t data, uint16_t addr);
-//void read_Data_SubMemory(uint16_t addr,uint8_t data_length);
-
-
-// void readDirectMemory(uint8_t addr);
-// void readSubMemory(uint16_t addr);
 // void readData_Memory_Settings(uint16_t addr);
 //void writeData_Memory_Settings(uint32_t data, uint16_t addr);
 
