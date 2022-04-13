@@ -21,7 +21,7 @@ int initMemory()
     {
         fscanf(fp,"%s %x",&mm.DirectMemory[i].name,&mm.DirectMemory[i].addr);
         mm.DirectMemory[i].data = 0;
-        printf("%-20s\t%#x\n", mm.DirectMemory[i].name,mm.DirectMemory[i].addr); 
+        printf("%-30s\t%#x\n", mm.DirectMemory[i].name,mm.DirectMemory[i].addr); 
     }
 		//printf("SIZE_OF_DIRECT = %d\n",SIZE_OF_DIRECT);
         printf("***** DirectMemory initialization completed *****\n\n" ); 
@@ -43,9 +43,9 @@ int initMemory()
     for(int i=0;i<SIZE_OF_DATASUB;i++)
     {
         fscanf(fp1,"%s%x%d",&mm.DataSubMemory[i].name,&mm.DataSubMemory[i].addr,&mm.DataSubMemory[i].data_length);
-        memset(mm.DataSubMemory[i].data,0,sizeof(mm.DataSubMemory[i].data));
+        memset(mm.DataSubMemory[i].data,0,mm.DataSubMemory[i].data_length);
 		
-        printf("%-20s\t%#x\t%d\n", mm.DataSubMemory[i].name,mm.DataSubMemory[i].addr,mm.DataSubMemory[i].data_length); 
+        printf("%-30s\t%#x\t%d\n", mm.DataSubMemory[i].name,mm.DataSubMemory[i].addr,mm.DataSubMemory[i].data_length); 
     }
         printf("***** DataSubMemory initialization completed *****\n\n" ); 
 	
@@ -66,11 +66,34 @@ int initMemory()
     for(int i=0;i<SIZE_OF_COMSUB;i++)
     {
         fscanf(fp2,"%s %x",&mm.ComSubMemory[i].name,&mm.ComSubMemory[i].addr);
-        printf("%-20s\t%#x\n", mm.ComSubMemory[i].name,mm.ComSubMemory[i].addr); 
+        printf("%-30s\t%#x\n", mm.ComSubMemory[i].name,mm.ComSubMemory[i].addr); 
     }
         printf("***** ComSubMemory initialization completed *****\n\n" ); 
 	
     fclose(fp2);
+
+	//读取外部配置文件，初始化间接数据寄存器
+	FILE *fp3;
+	fp3 = fopen("../sim/InitDataMemorySettings.txt","r");
+    if(fp3==NULL)
+    {  
+		printf("File cannot open!\n" );  
+		//exit;  
+		return 0;
+	}
+    else
+        printf("***** DataMemorySettings initialization begin *****\n" );   
+    
+    for(int i=0;i<SIZE_OF_SETTING;i++)
+    {
+        fscanf(fp1,"%s%x%d",&mm.Data_Memory_Settings[i].name,&mm.Data_Memory_Settings[i].addr,&mm.Data_Memory_Settings[i].data_length);
+        memset(mm.Data_Memory_Settings[i].data,0,mm.Data_Memory_Settings[i].data_length);
+		
+        printf("%-30s\t%#x\t%d\n", mm.Data_Memory_Settings[i].name,mm.Data_Memory_Settings[i].addr,mm.Data_Memory_Settings[i].data_length); 
+    }
+        printf("***** DataMemorySettings initialization completed *****\n\n" ); 
+	
+    fclose(fp3);
     return 0;
 }
 
@@ -117,7 +140,7 @@ void writeDirectMemory(uint16_t data, uint8_t addr)
 		printf("Error: the address %#x cant't match one command!\n",addr);
 	    return;
 	}
-    mm.Data_Memory_Settings[info].data = data;
+    mm.DirectMemory[info].data = data;
     //printf("Data %#x >>> %#x %s\n",mm.Data_Memory_Settings[info].data,addr,mm.DirectMemory[info].name);
 }
 
@@ -134,8 +157,8 @@ uint16_t readDirectMemory(uint8_t addr)
 		printf("Error: the address %#x cant't match one command!\n",addr);
 	    return 0;
 	}
-    printf("%#x %s = %#x\n",addr,mm.DirectMemory[info].name,mm.Data_Memory_Settings[info].data);
-    return mm.Data_Memory_Settings[info].data;
+    printf("%#x %s = %#x\n",addr,mm.DirectMemory[info].name,mm.DirectMemory[info].data);
+    return mm.DirectMemory[info].data;
 }
 
 
@@ -147,8 +170,8 @@ uint16_t readDirectMemory_name(char name[])
         printf("Error: the input command %s cant't match!\n",name);
         return -1;
     }
-    printf("%#x %s = %#x\n",mm.DirectMemory[info].addr,mm.DirectMemory[info].name,mm.Data_Memory_Settings[info].data);
-    return mm.Data_Memory_Settings[info].data;
+    printf("%#x %s = %#x\n",mm.DirectMemory[info].addr,mm.DirectMemory[info].name,mm.DirectMemory[info].data);
+    return mm.DirectMemory[info].data;
 }
 
 void setFlags(uint8_t data,uint8_t addr)
@@ -160,7 +183,7 @@ void setFlags(uint8_t data,uint8_t addr)
         return;
     }
 	if(data)
-    mm.Data_Memory_Settings[info].data |= data;
+    mm.DirectMemory[info].data |= data;
 }
 
 void clearFlags(uint8_t data,uint8_t addr)
@@ -172,19 +195,24 @@ void clearFlags(uint8_t data,uint8_t addr)
         return;
     }
 	if(data)
-    mm.Data_Memory_Settings[info].data &= ~data;
+    mm.DirectMemory[info].data &= ~data;
 }
 
 int find_SM_info(uint16_t addr)
 {
-	for(int i=0;i<SIZE_OF_DATASUB;i++)
+	for(int i=0;i<SIZE_OF_DATASUB;i++)//data_submemory
     {
         if(addr ==  mm.DataSubMemory[i].addr)
             return i;
     }
-	for(int i=0;i<SIZE_OF_COMSUB;i++)
+	for(int i=0;i<SIZE_OF_COMSUB;i++)//command_submemory
     {
         if(addr ==  mm.ComSubMemory[i].addr)
+            return i;
+    }
+	for(int i=0;i<SIZE_OF_SETTING;i++)//data_memory_settings
+    {
+        if(addr ==  mm.Data_Memory_Settings[i].addr)
             return i;
     }
 
@@ -194,51 +222,94 @@ int find_SM_info(uint16_t addr)
 int find_SM_type(uint16_t addr)
 {
 	
-	for(int i=0;i<SIZE_OF_DATASUB;i++)
+	for(int i=0;i<SIZE_OF_DATASUB;i++)//data_submemory
     {
         if(addr ==  mm.DataSubMemory[i].addr)
             return 1;
     }
-	for(int i=0;i<SIZE_OF_COMSUB;i++)
+	for(int i=0;i<SIZE_OF_COMSUB;i++)//command_submemory
     {
         if(addr ==  mm.ComSubMemory[i].addr)
             return 0;
+    }
+	for(int i=0;i<SIZE_OF_SETTING;i++)//data_memory_settings
+    {
+        if(addr ==  mm.Data_Memory_Settings[i].addr)
+            return 2;
     }
 
 	return -1;
 }
 
-int Reg_data_to_Buffer(int info)
+int Reg_data_to_Buffer(int info,int mem_type)
 {
 	int data_length;
-	data_length = mm.DataSubMemory[info].data_length;
-	
-	for(int i=0;i<data_length;i++)
-	{
-		writeDirectMemory(mm.DataSubMemory[info].data[i], 0x40+i);
-	}
-
-	writeDirectMemory(data_length+4, 0x61);
-	//这里还应该再写CRC
-	
-	return 0;
-}
-
-
-int Buffer_data_to_Reg(int info,uint8_t data_length)
-
-{	
-	if(data_length <= mm.DataSubMemory[info].data_length)
-	{
+	if(mem_type == 1)//data_submemory
+	{	
+		data_length = mm.DataSubMemory[info].data_length;
+		
 		for(int i=0;i<data_length;i++)
 		{
-			mm.DataSubMemory[info].data[i] = readDirectMemory(0x40 + i);
+			writeDirectMemory(mm.DataSubMemory[info].data[i], 0x40+i);
 		}
+		writeDirectMemory(data_length+4, 0x61);
+		//这里还应该再写CRC
+		return 0;
+	}
+	else if(mem_type == 2)//data_memory_settings
+	{	
+		data_length = mm.Data_Memory_Settings[info].data_length;
+		
+		for(int i=0;i<data_length;i++)
+		{
+			writeDirectMemory(mm.Data_Memory_Settings[info].data[i], 0x40+i);
+		}
+		writeDirectMemory(data_length+4, 0x61);
+		//这里还应该再写CRC
 		return 0;
 	}
 	else
-		printf("Warning: Please input %d bytes!\n",mm.DataSubMemory[info].data_length);
-	return 1;	
+		return -1;
+}
+
+
+int Buffer_data_to_Reg(int info,uint8_t data_length,int mem_type)
+
+{	
+	if(mem_type == 1)//data_submemory
+	{
+		if(data_length <= mm.DataSubMemory[info].data_length)
+		{
+			for(int i=0;i<data_length;i++)
+			{
+				mm.DataSubMemory[info].data[i] = readDirectMemory(0x40 + i);
+			}
+			return 0;
+		}
+		else
+		{
+			printf("Warning: Please input %d bytes!\n",mm.DataSubMemory[info].data_length);
+			return -1;	
+		}
+	}
+	else if(mem_type == 2)//data_memory_settings
+	{
+		if(data_length <= mm.Data_Memory_Settings[info].data_length)
+		{
+			for(int i=0;i<data_length;i++)
+			{
+				mm.Data_Memory_Settings[info].data[i] = readDirectMemory(0x40 + i);
+			}
+			return 0;
+		}
+		else
+		{
+			printf("Warning: Please input %d bytes!\n",mm.Data_Memory_Settings[info].data_length);
+			return -1;	
+		}	
+	}
+	else
+		return -1;
 }
 
 
@@ -270,15 +341,15 @@ void SubCommand()
 	}
 	
 	int type = find_SM_type(subcommand);
-	if(type == 1)
+	if(type == 1 || type == 2)
 	{
-		Reg_data_to_Buffer(info);
+		Reg_data_to_Buffer(info,type);
 		
 		printf(">>> Write(1) or Read(0):\n");
 		scanf("%d",&wr_buffer);
 		if(wr_buffer==1)//write buffer
 		{
-			printf(">>> Bytes to Write(HEX):\n");//接收外部输入的数据，并写入40-5f
+			printf(">>> Bytes to Write(HEX,little_endian):\n");//接收外部输入的数据，并写入40-5f
 
 			int i=0;
 			do
@@ -297,7 +368,7 @@ void SubCommand()
 			//这里之后要添加计算crc的函数，并写入0x60
 			writeDirectMemory(data_length+4, 0x61);//数据长度写入0x61
 
-			if(!Buffer_data_to_Reg(info,data_length))//缓冲区指定长度的数据写入子命令对应的存储区域
+			if(!Buffer_data_to_Reg(info,data_length,type))//缓冲区指定长度的数据写入子命令对应的存储区域
 			{
 				writeDirectMemory(subcommand_l,0x3E);//子命令完成任务的标志
 				writeDirectMemory(subcommand_h,0x3F);

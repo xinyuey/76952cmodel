@@ -32,7 +32,7 @@ typedef enum{
 #define SIZE_OF_DATASUB 32					//数据相关子命令
 #define SIZE_OF_COMSUB 46					//仅命令子命令
 
-#define SIZE_OF_COMMAND 20					//命令名字长度
+#define SIZE_OF_COMMAND 30					//命令名字长度
 #define SIZE_OF_DATA_BUFFER 32				//0x40-5f长度
 
 
@@ -46,7 +46,7 @@ struct RAM_DATASUB{                 		//间接命令寄存器
 		char name[SIZE_OF_COMMAND];
 		int data_length;
         uint16_t addr;          			//0x0000-0xffff地址
-        uint8_t data[SIZE_OF_DATA_BUFFER];          			//32字节数据   
+        uint8_t data[SIZE_OF_DATA_BUFFER];  //32字节数据   
 };
 
 struct RAM_COMSUB{                 			//间接命令寄存器
@@ -55,8 +55,10 @@ struct RAM_COMSUB{                 			//间接命令寄存器
 };
 
 struct DATA_MEMORY_SETTINGS{    			//配置寄存器
+		char name[SIZE_OF_COMMAND];
+		int data_length;
         uint16_t addr;          			//0x0000-0xffff地址
-        uint32_t data;          			//32位数据
+        uint8_t data[SIZE_OF_DATA_BUFFER];  //32字节数据   
 };
 
 struct MemoryManager{
@@ -77,22 +79,11 @@ void clearFlags(uint8_t data,uint8_t addr);
 
 int find_SM_info(uint16_t addr);
 int find_SM_type(uint16_t addr);
-int Reg_data_to_Buffer(int info);
-int Buffer_data_to_Reg(int info,uint8_t data_length);
+int Reg_data_to_Buffer(int info,int mem_type);
+int Buffer_data_to_Reg(int info,uint8_t data_length,int mem_type);
 int ComSubCommand(int info);
 
 void SubCommand();
 void Command_Sequence();
-
-//int Command_SubMemory(uint16_t addr);
-//void Data_SubMemory(uint16_t addr,uint16_t data,uint8_t type);
-//void write_Data_SubMemory(uint16_t data, uint16_t addr);
-//void read_Data_SubMemory(uint16_t addr,uint8_t data_length);
-
-
-// void readDirectMemory(uint8_t addr);
-// void readSubMemory(uint16_t addr);
-// void readData_Memory_Settings(uint16_t addr);
-//void writeData_Memory_Settings(uint32_t data, uint16_t addr);
 
 #endif
