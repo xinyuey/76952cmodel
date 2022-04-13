@@ -39,7 +39,8 @@ int initMemory()
 	}
     else
         printf("***** DataSubMemory initialization begin *****\n" );   
-    
+
+	char data_format[1];
     for(int i=0;i<SIZE_OF_DATASUB;i++)
     {
         fscanf(fp1,"%s%x%d",&mm.DataSubMemory[i].name,&mm.DataSubMemory[i].addr,&mm.DataSubMemory[i].data_length);
@@ -71,8 +72,7 @@ int initMemory()
         printf("***** ComSubMemory initialization completed *****\n\n" ); 
 	
     fclose(fp2);
-
-	//读取外部配置文件，初始化间接数据寄存器
+	//读取外部配置文件，初始化配置寄存器
 	FILE *fp3;
 	fp3 = fopen("../sim/InitDataMemorySettings.txt","r");
     if(fp3==NULL)
@@ -127,7 +127,7 @@ int find_DM_info_name(char name[])
 
 
 //写直接寄存器
-void writeDirectMemory(uint16_t data, uint8_t addr)
+void writeDirectMemory(uint16_t data, uint8_t addr)//传入数据应该改为有符号数据!
 {
     int info = find_DM_info(addr);
     if(info >SIZE_OF_DIRECT-1)
@@ -180,10 +180,12 @@ void setFlags(uint8_t data,uint8_t addr)
     if(addr > mm.DirectMemory[SIZE_OF_DIRECT-1].addr || addr < 0)
     {
         printf("Error: the address %#x is cross the border!\n",addr);
+		printf("setFlags");
         return;
     }
 	if(data)
-    mm.DirectMemory[info].data |= data;
+    		mm.DirectMemory[info].data |= data;
+
 }
 
 void clearFlags(uint8_t data,uint8_t addr)
@@ -195,7 +197,7 @@ void clearFlags(uint8_t data,uint8_t addr)
         return;
     }
 	if(data)
-    mm.DirectMemory[info].data &= ~data;
+    		mm.DirectMemory[info].data &= ~data;
 }
 
 int find_SM_info(uint16_t addr)
@@ -280,6 +282,7 @@ int Buffer_data_to_Reg(int info,uint8_t data_length,int mem_type)
 	{
 		if(data_length <= mm.DataSubMemory[info].data_length)
 		{
+<<<<<<< HEAD
 			for(int i=0;i<data_length;i++)
 			{
 				mm.DataSubMemory[info].data[i] = readDirectMemory(0x40 + i);
@@ -358,7 +361,7 @@ void SubCommand()
 					i++;
 					data_length++;
 				}
-			while (getchar() != '\n');
+			while (getchar() != '\n');//以空格符按字节分割输入数据
 			
 			for(int i=0;i<data_length;i++)
 			{
@@ -404,7 +407,7 @@ void Command_Sequence()
 	scanf("%x",&command_in);	
 	switch (command_in)
 	{
-		case 0x3E://only write 2 bytes to 0x3e continously can trigger the subcommand
+		case 0x3E://只有向3e、3f连续写入两字节才能触发子命令序列
 			printf(">>> Write(1) or Read(0):\n");
 			scanf("%d",&wr_in);
 			if(wr_in)
@@ -416,11 +419,11 @@ void Command_Sequence()
 						scanf("%x",&subcommand_in[i]);
 						i++;
 					}
-				while (getchar() != '\n');
+				while (getchar() != '\n');//以空格符分隔子命令高低字节
 				
 				writeDirectMemory(subcommand_in[0],0x3E);
 				writeDirectMemory(subcommand_in[1],0x3F);
-				SubCommand();//转换得到子命令地址；任务完成前往3e、3f写入ff，任务完成后写入该子命令地址；根据地址触发相应的子命令操作，返回数据至缓冲区						
+				SubCommand();//转换得到子命令地址；任务完成前往3e、3f写入ff，任务完成后往3e、3f写入该子命令地址；根据地址触发相应的子命令操作，返回数据至缓冲区						
 			}
 			else
 				readDirectMemory(0x3E);
