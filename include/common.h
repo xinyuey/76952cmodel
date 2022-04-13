@@ -34,29 +34,16 @@ typedef enum{
 #define SIZE_OF_COMSUB 46					//仅命令子命令
 
 #define SIZE_OF_COMMAND 30					//命令名字长度
-#define SIZE_OF_DATA_BUFFER 32				//0x40-5f长度
-
-typedef union{
-	uint16_t data_u;
-	int16_t data_i;
-	}mem16_t;
-	
-typedef union{
-	uint8_t data_u[SIZE_OF_DATA_BUFFER];
-	int8_t data_i[SIZE_OF_DATA_BUFFER];
-	}mem8_t;	
+#define SIZE_OF_DATA_BUFFER 32				//0x40-5f长度	
 	
 struct RAM_DIRECT{           	   			//直接命令寄存器
         char name[SIZE_OF_COMMAND];
-		//int data_format;
-		//int data_length;
         uint8_t addr;           			//0x00-0xff地址
         uint16_t data;          			//16位数据
 };
 
 struct RAM_DATASUB{                 		//间接命令寄存器
 		char name[SIZE_OF_COMMAND];
-		int data_format;
 		int data_length;
         uint16_t addr;          			//0x0000-0xffff地址
         uint8_t data[SIZE_OF_DATA_BUFFER];  //32字节数据
