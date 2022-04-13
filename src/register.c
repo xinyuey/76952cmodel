@@ -282,7 +282,7 @@ int Buffer_data_to_Reg(int info,uint8_t data_length,int mem_type)
 	{
 		if(data_length <= mm.DataSubMemory[info].data_length)
 		{
-<<<<<<< HEAD
+
 			for(int i=0;i<data_length;i++)
 			{
 				mm.DataSubMemory[info].data[i] = readDirectMemory(0x40 + i);

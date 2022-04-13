@@ -28,7 +28,7 @@ typedef enum{
         LATCH_TRIP
         }StateMachine_Lacth;
 
-#define SIZE_OF_DIRECT 135					//直接命令
+#define SIZE_OF_DIRECT 86					//直接命令
 #define SIZE_OF_SETTING 272					//配置
 #define SIZE_OF_DATASUB 32					//数据相关子命令
 #define SIZE_OF_COMSUB 46					//仅命令子命令
