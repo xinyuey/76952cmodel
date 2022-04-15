@@ -40,11 +40,10 @@ int initMemory()
     else
         printf("***** DataSubMemory initialization begin *****\n" );   
 
-	char data_format[1];
     for(int i=0;i<SIZE_OF_DATASUB;i++)
     {
         fscanf(fp1,"%s%x%d",&mm.DataSubMemory[i].name,&mm.DataSubMemory[i].addr,&mm.DataSubMemory[i].data_length);
-        memset(mm.DataSubMemory[i].data,0,mm.DataSubMemory[i].data_length);
+        memset(mm.DataSubMemory[i].data,0,SIZE_OF_DATA_BUFFER);
 		
         printf("%-30s\t%#x\t%d\n", mm.DataSubMemory[i].name,mm.DataSubMemory[i].addr,mm.DataSubMemory[i].data_length); 
     }
@@ -87,7 +86,7 @@ int initMemory()
     for(int i=0;i<SIZE_OF_SETTING;i++)
     {
         fscanf(fp1,"%s%x%d",&mm.Data_Memory_Settings[i].name,&mm.Data_Memory_Settings[i].addr,&mm.Data_Memory_Settings[i].data_length);
-        memset(mm.Data_Memory_Settings[i].data,0,mm.Data_Memory_Settings[i].data_length);
+        memset(mm.Data_Memory_Settings[i].data,0,SIZE_OF_DATA_BUFFER);
 		
         printf("%-30s\t%#x\t%d\n", mm.Data_Memory_Settings[i].name,mm.Data_Memory_Settings[i].addr,mm.Data_Memory_Settings[i].data_length); 
     }
@@ -105,29 +104,14 @@ int find_DM_info(uint8_t addr)
         if(addr ==  mm.DirectMemory[i].addr)
             return i;
     }
-	if(addr < mm.DirectMemory[0].addr || addr > mm.DirectMemory[SIZE_OF_DIRECT-1].addr)
+	if(addr < mm.DirectMemory[0].addr || addr > mm.DirectMemory[SIZE_OF_DIRECT-1].addr)//地址越界，未找到
 		return SIZE_OF_DIRECT;
 	else 
-		return -1;
+		return -1;//地址其他错误，未找到
 }
-
-int find_DM_info_name(char name[])
-{
-    for(int i=0;i<SIZE_OF_DIRECT;i++)
-    {
-        if(strcmp(name,mm.DirectMemory[i].name) == 0)
-    	{
-//	    	printf("FOUND!\n");
-	        return find_DM_info(mm.DirectMemory[i].addr);
-    	}
-			
-    }
-	return -1;
-}
-
 
 //写直接寄存器
-void writeDirectMemory(uint16_t data, uint8_t addr)//传入数据应该改为有符号数据!
+void writeDirectMemory(uint16_t data, uint8_t addr)
 {
     int info = find_DM_info(addr);
     if(info >SIZE_OF_DIRECT-1)
@@ -141,9 +125,10 @@ void writeDirectMemory(uint16_t data, uint8_t addr)//传入数据应该改为有
 	    return;
 	}
     mm.DirectMemory[info].data = data;
-    //printf("Data %#x >>> %#x %s\n",mm.Data_Memory_Settings[info].data,addr,mm.DirectMemory[info].name);
+    //printf("Data %#x >>> %#x %s\n",mm.DirectMemory[info].data,addr,mm.DirectMemory[info].name);
 }
 
+//读直接寄存器
 uint16_t readDirectMemory(uint8_t addr)
 {
     int info = find_DM_info(addr);
@@ -161,19 +146,7 @@ uint16_t readDirectMemory(uint8_t addr)
     return mm.DirectMemory[info].data;
 }
 
-
-uint16_t readDirectMemory_name(char name[])
-{
-    int info = find_DM_info_name(name);
-    if(info >SIZE_OF_DIRECT-1 || info < 0)
-    {
-        printf("Error: the input command %s cant't match!\n",name);
-        return -1;
-    }
-    printf("%#x %s = %#x\n",mm.DirectMemory[info].addr,mm.DirectMemory[info].name,mm.DirectMemory[info].data);
-    return mm.DirectMemory[info].data;
-}
-
+//置位保护状态标志位
 void setFlags(uint8_t data,uint8_t addr)
 {
 	int info = find_DM_info(addr);
@@ -188,6 +161,7 @@ void setFlags(uint8_t data,uint8_t addr)
 
 }
 
+//清除保护状态标志位
 void clearFlags(uint8_t data,uint8_t addr)
 {
 	int info = find_DM_info(addr);
@@ -200,6 +174,7 @@ void clearFlags(uint8_t data,uint8_t addr)
     		mm.DirectMemory[info].data &= ~data;
 }
 
+//按地址索引子命令寄存器
 int find_SM_info(uint16_t addr)
 {
 	for(int i=0;i<SIZE_OF_DATASUB;i++)//data_submemory
@@ -221,6 +196,7 @@ int find_SM_info(uint16_t addr)
 	return -1;
 }
 
+//判断数据相关或仅命令子命令
 int find_SM_type(uint16_t addr)
 {
 	
@@ -243,16 +219,155 @@ int find_SM_type(uint16_t addr)
 	return -1;
 }
 
-int Reg_data_to_Buffer(int info,int mem_type)
+/*	
+	内部向二级寄存器的指定偏移地址写入指定字节数据
+	uint16_t addr:双字节子命令地址
+	uint8_t offset:数据偏移地址
+	uint8_t *write_data:指向单字节数据的指针
+	uint8_t write_len:写入数据字节数
+*/
+void writeSubMemory(uint16_t addr,uint8_t offset,uint8_t *data,uint8_t write_len)
+{
+	int info = find_SM_info(addr);
+	if(info < 0)
+	{
+		return;
+	}
+	else
+	{
+		if(offset+write_len > mm.DataSubMemory[info].data_length)
+		{
+			return;
+		}
+		else
+		{
+			while(write_len > 0)
+			{
+				mm.DataSubMemory[info].data[offset] = *data;
+				//printf("data")
+				write_len --;
+				if(write_len > 0)
+				{
+					offset ++;
+					data ++;
+				}
+					
+			}
+		}
+		
+	}	
+}
+
+/*
+	内部从二级寄存器的指定偏移地址读出指定字节数据
+	uint16_t addr:双字节子命令地址
+	uint8_t offset:数据偏移地址
+	uint8_t read_len:读取数据字节数	
+	return pdata：返回一个指向目标数据数组的指针，再用一个数组接收即可
+*/
+uint8_t* readSubMemory(uint16_t addr,uint8_t offset,uint8_t read_len)
+{
+	uint8_t data[read_len];
+	uint8_t *pdata = data;
+	int info = find_SM_info(addr);
+	if(info < 0)
+	{
+		return 0;
+	}
+	else
+	{
+		if(offset+read_len > mm.DataSubMemory[info].data_length)
+		{
+			return 0;
+		}
+		else
+		{
+			for(int i=0;i<read_len;i++)
+			{
+				data[i] = mm.DataSubMemory[info].data[offset+i];
+			}
+		}
+		
+	}
+	return pdata;
+}
+
+
+/*	
+	内部连续多字节写配置寄存器
+	uint16_t addr:双字节子命令地址
+	uint8_t *write_data:指向单字节数据数组的指针
+	uint8_t write_len:写入数据字节数
+*/
+void writeSettings(uint16_t addr,uint8_t *write_data,uint8_t write_len)
+{
+	int info = find_SM_info(addr);
+	if(info < 0)
+	{
+		return;
+	}
+	else
+	{
+		if(write_len > mm.Data_Memory_Settings[info].data_length)
+		{
+			return;
+		}
+		else
+		{
+			for(int i=0;i<write_len;i++)
+			{
+				mm.Data_Memory_Settings[info].data[i] = *write_data;
+				write_data ++;
+			}
+		}
+		
+	}	
+}
+
+/*	
+	内部连续多字节读配置寄存器
+	uint16_t addr:双字节子命令地址
+	return pdata：返回一个指向目标数据数组的指针，再用一个数组接收即可
+*/
+uint8_t* readSettings(uint16_t addr)
+{
+	int info = find_SM_info(addr);
+	int data_len = mm.Data_Memory_Settings[info].data_length;
+	uint8_t data[data_len];
+	uint8_t *pdata = data;
+	
+	if(info < 0)
+	{
+		return 0;
+	}
+	else
+	{
+		for(int i=0;i<data_len;i++)
+		{
+			data[i] = mm.Data_Memory_Settings[info].data[i];
+		}
+		
+	}
+	return pdata;
+}
+
+
+
+
+
+/*下面是外部输入子命令的执行逻辑,内部逻辑用不到*/
+
+//子命令数据写入缓冲区
+int Reg_data_to_Buffer(int mem_info,int mem_type)
 {
 	int data_length;
 	if(mem_type == 1)//data_submemory
 	{	
-		data_length = mm.DataSubMemory[info].data_length;
+		data_length = mm.DataSubMemory[mem_info].data_length;
 		
 		for(int i=0;i<data_length;i++)
 		{
-			writeDirectMemory(mm.DataSubMemory[info].data[i], 0x40+i);
+			writeDirectMemory(mm.DataSubMemory[mem_info].data[i], 0x40+i);
 		}
 		writeDirectMemory(data_length+4, 0x61);
 		//这里还应该再写CRC
@@ -260,11 +375,11 @@ int Reg_data_to_Buffer(int info,int mem_type)
 	}
 	else if(mem_type == 2)//data_memory_settings
 	{	
-		data_length = mm.Data_Memory_Settings[info].data_length;
+		data_length = mm.Data_Memory_Settings[mem_info].data_length;
 		
 		for(int i=0;i<data_length;i++)
 		{
-			writeDirectMemory(mm.Data_Memory_Settings[info].data[i], 0x40+i);
+			writeDirectMemory(mm.Data_Memory_Settings[mem_info].data[i], 0x40+i);
 		}
 		writeDirectMemory(data_length+4, 0x61);
 		//这里还应该再写CRC
@@ -274,40 +389,40 @@ int Reg_data_to_Buffer(int info,int mem_type)
 		return -1;
 }
 
-
-int Buffer_data_to_Reg(int info,uint8_t data_length,int mem_type)
+//缓冲区数据写入子命令数据区域
+int Buffer_data_to_Reg(int mem_info,uint8_t data_length,int mem_type)
 
 {	
 	if(mem_type == 1)//data_submemory
 	{
-		if(data_length <= mm.DataSubMemory[info].data_length)
+		if(data_length <= mm.DataSubMemory[mem_info].data_length)
 		{
 
 			for(int i=0;i<data_length;i++)
 			{
-				mm.DataSubMemory[info].data[i] = readDirectMemory(0x40 + i);
+				mm.DataSubMemory[mem_info].data[i] = readDirectMemory(0x40 + i);
 			}
 			return 0;
 		}
 		else
 		{
-			printf("Warning: Please input %d bytes!\n",mm.DataSubMemory[info].data_length);
+			printf("Warning: Please input %d bytes!\n",mm.DataSubMemory[mem_info].data_length);
 			return -1;	
 		}
 	}
 	else if(mem_type == 2)//data_memory_settings
 	{
-		if(data_length <= mm.Data_Memory_Settings[info].data_length)
+		if(data_length <= mm.Data_Memory_Settings[mem_info].data_length)
 		{
 			for(int i=0;i<data_length;i++)
 			{
-				mm.Data_Memory_Settings[info].data[i] = readDirectMemory(0x40 + i);
+				mm.Data_Memory_Settings[mem_info].data[i] = readDirectMemory(0x40 + i);
 			}
 			return 0;
 		}
 		else
 		{
-			printf("Warning: Please input %d bytes!\n",mm.Data_Memory_Settings[info].data_length);
+			printf("Warning: Please input %d bytes!\n",mm.Data_Memory_Settings[mem_info].data_length);
 			return -1;	
 		}	
 	}
@@ -315,13 +430,25 @@ int Buffer_data_to_Reg(int info,uint8_t data_length,int mem_type)
 		return -1;
 }
 
-
+//仅命令子命令执行逻辑（仅内部逻辑，无外部输入序列）
 int ComSubCommand(int info)
 {
 	return 0;
 }
 
-void SubCommand()
+//子命令执行状态机（仅内部逻辑，无外部输入序列）
+//void SubCommand()
+//{
+//	uint8_t subcommand_l,subcommand_h;
+//	uint16_t subcommand;
+//	
+//	subcommand_l = readDirectMemory(0x3E);   
+//	subcommand_h = readDirectMemory(0x3F);
+//	subcommand = subcommand_l | (subcommand_h << 8);
+//}
+
+//外部子命令序列（子命令地址已写入3e3f）
+void SubCommand_Sequence()
 {
 	int wr_buffer = 0;
 	uint8_t subcommand_l,subcommand_h;
@@ -344,7 +471,7 @@ void SubCommand()
 	}
 	
 	int type = find_SM_type(subcommand);
-	if(type == 1 || type == 2)
+	if(type == 1 || type == 2)//数据相关子命令、data_memory_settings
 	{
 		Reg_data_to_Buffer(info,type);
 		
@@ -361,15 +488,15 @@ void SubCommand()
 					i++;
 					data_length++;
 				}
-			while (getchar() != '\n');//以空格符按字节分割输入数据
+			while (getchar() != '\n');//以空格符按字节分割外部输入数据
 			
 			for(int i=0;i<data_length;i++)
 			{
-				writeDirectMemory(data_in[i],0x40+i);
+				writeDirectMemory(data_in[i],0x40+i);//按字节将外部输入数据写入缓冲区
 			}
 			
 			//这里之后要添加计算crc的函数，并写入0x60
-			writeDirectMemory(data_length+4, 0x61);//数据长度写入0x61
+			writeDirectMemory(data_length+4, 0x61);//将外部输入数据长度写入0x61
 
 			if(!Buffer_data_to_Reg(info,data_length,type))//缓冲区指定长度的数据写入子命令对应的存储区域
 			{
@@ -392,11 +519,13 @@ void SubCommand()
 		else
 			return;
 	}	
-	else
+	else//仅动作子命令
 		ComSubCommand(info);
+	
 	return;
 }
 
+//外部命令序列
 void Command_Sequence()
 {
 	int command_in,wr_in;
@@ -423,7 +552,7 @@ void Command_Sequence()
 				
 				writeDirectMemory(subcommand_in[0],0x3E);
 				writeDirectMemory(subcommand_in[1],0x3F);
-				SubCommand();//转换得到子命令地址；任务完成前往3e、3f写入ff，任务完成后往3e、3f写入该子命令地址；根据地址触发相应的子命令操作，返回数据至缓冲区						
+				SubCommand_Sequence();//转换得到子命令地址；任务完成前往3e、3f写入ff，任务完成后往3e、3f写入该子命令地址；根据地址触发相应的子命令操作，返回数据至缓冲区						
 			}
 			else
 				readDirectMemory(0x3E);
@@ -442,4 +571,31 @@ void Command_Sequence()
 				readDirectMemory(command_in);						
 			break;
 	}	
+}
+
+void writeBuffer(uint8_t write_addr,uint8_t *write_buff,uint8_t write_bytes)//向缓冲区连续写指定字节数据
+{
+	//uint8_t write_len;
+	
+	while(write_bytes > 0)
+	{
+		writeDirectMemory(*write_buff,write_addr);
+		write_bytes --;
+		if(write_bytes > 0)
+		{
+			write_addr ++;
+			write_buff ++;
+		}
+		
+	}
+	return;
+}
+
+void readBuffer(uint8_t read_addr,uint8_t read_bytes)//向缓冲区连续读指定字节数据
+{
+	for(int i=0;i<read_bytes;i++)
+	{
+		readDirectMemory(read_addr+i);
+	}
+	return;
 }

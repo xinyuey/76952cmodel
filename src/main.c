@@ -26,7 +26,7 @@ void BQ76952_Vcell(FILE* file)
     {
         fscanf(file,"%hu",&CellVoltage[i]);
 		writeDirectMemory(CellVoltage[i],0x14 + i*2);
-//		readDirectMemory(0X14 + i*2);
+		//readDirectMemory(0X14 + i*2);
     }
 
     /*fscanf(file,"%hd",&current);
@@ -106,10 +106,22 @@ int main()
         OCC_protect();*/
     }
 
-	while(1)
-	{
-		Command_Sequence();
-	}
-	
-	return 0;    
+//等待外部输入命令序列使用示例
+//	while(1)
+//	{
+//		Command_Sequence();
+//	}
+
+////内部读写二级寄存器函数使用示例
+//	uint8_t wdata[4] ={0x4a,0x71,0x31,0x90};
+//	uint8_t rdata[4];
+//	writeSubMemory(0x0071, 0, wdata, 4);
+//	uint8_t *pdata = readSubMemory(0x0071, 0, 4);
+//	for(int i=0;i<4;i++)
+//	{
+//		rdata[i] = *pdata;
+//		printf("rdata[%d] = %#x\n",i,rdata[i]);
+//		pdata ++;
+//	}
+
 }
