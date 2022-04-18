@@ -36,7 +36,11 @@ StateMachine COV_State = NORMAL;
 StateMachine CUV_State = NORMAL;
 StateMachine_Lacth COVL_State = LATCH_RESET;
 
-
+#define COV_CHG BIT(3)
+#define COVL_CHG BIT(4)
+#define CUV_DSG BIT(2)
+#define XCHG BIT(6)
+#define XDSG BIT(5)
 
 uint8_t COV_Comp(uint16_t threshold)
 {
@@ -74,6 +78,8 @@ void COV_protect()
         case NORMAL:   
             clearFlags(COV_ALERT,SafetyAlertA);
 			clearFlags(COV_FAULT,SafetyStatusA);
+            if(COV_CHG & *readSettings(CHGFETProtectionsA))//FET自主控制已开启
+                clearFlags(XCHG,AlarmRawStatus);
             if(COV_Comp(COV_TH))
             {
                 COV_counter ++;
@@ -104,6 +110,8 @@ void COV_protect()
         case TRIP:
 			clearFlags(COV_ALERT,SafetyAlertA);		//Safety Alert A[COV] = 0;
 			setFlags(COV_FAULT,SafetyStatusA);		//Safety Status A[COV] = 1;
+            if(COV_CHG & *readSettings(CHGFETProtectionsA))//FET自主控制已开启
+                setFlags(XCHG,AlarmRawStatus);
             if (COV_recounter == RecoveryTime-1 && !COV_Comp(COV_TH - COV_REC))
             {
                 COV_recounter = 0;
@@ -134,7 +142,8 @@ void CUV_protect()
         case NORMAL:   
             clearFlags(CUV_ALERT,SafetyAlertA);
 			clearFlags(CUV_FAULT,SafetyStatusA);
-
+            if(CUV_DSG & *readSettings(DSGFETProtectionsA))//FET自主控制已开启
+                clearFlags(XDSG,AlarmRawStatus);
             if(CUV_Comp(CUV_TH))
             {
                 CUV_counter ++;
@@ -161,7 +170,8 @@ void CUV_protect()
         case TRIP:
             clearFlags(CUV_ALERT,SafetyAlertA);	//Safety Alert A[CUV] = 0;
             setFlags(CUV_FAULT,SafetyStatusA);	//Safety Status A[CUV] = 1;
-            
+            if(CUV_DSG & *readSettings(DSGFETProtectionsA))//FET自主控制已开启
+                setFlags(XDSG,AlarmRawStatus);
             if (CUV_recounter == RecoveryTime-1 && !CUV_Comp(CUV_TH + CUV_REC))
             {
                 CUV_recounter = 0;
@@ -191,6 +201,8 @@ void COVL_protect()
         case LATCH_RESET:   
             clearFlags(COVL_ALERT,SafetyAlertC);		//Safety Alert C[COVL] = 0;
 			clearFlags(COVL_FAULT,SafetyStatusC);		//Safety Status C[COVL] = 0;
+            if(COVL_CHG & *readSettings(CHGFETProtectionsC))//FET自主控制已开启
+                clearFlags(XCHG,AlarmRawStatus);
             if(COVL_counter > 0)
             {
 				COVL_State = LATCH_ALERT;
@@ -213,6 +225,8 @@ void COVL_protect()
         case LATCH_TRIP:
             clearFlags(COVL_ALERT,SafetyAlertC);		//Safety Alert C[COVL] = 0;
 			setFlags(COVL_FAULT,SafetyStatusC);			//Safety Status C[COVL] = 1;
+            if(COVL_CHG & *readSettings(CHGFETProtectionsC))//FET自主控制已开启
+                setFlags(XCHG,AlarmRawStatus);
             if(COVL_REC_counter == COVL_RecoveryTime-1)
             {
                 COVL_REC_counter = 0;
