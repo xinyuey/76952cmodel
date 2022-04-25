@@ -1,5 +1,6 @@
 /*CHG PCHG DSG PDSG*/
 
+//相关寄存器
 //#define FETOptions 0x9308                   // Settings:FET:FET Options
 //#define ChgPumpControl 0x9309               // Settings:FET:Chg Pump Control
 //#define PrechargeStartVoltage 0x930A        // Settings:FET:Precharge Start Voltage
@@ -49,6 +50,13 @@ void FET_auto_control
 				const uint8_t COV_error,
 				const uint8_t COVL_error,
 				const uint8_t CUV_error,
+				const uint8_t SCD_error,
+				const uint8_t SCDL_error,
+				const uint8_t OCD1_error,
+				const uint8_t OCD2_error,
+				const uint8_t OCD3_error,
+				const uint8_t OCDL_error,
+				const uint8_t OCC_error,
 				//output
 				uint8_t *CHG_ON,
 				uint8_t *DSG_ON
@@ -62,27 +70,28 @@ void FET_auto_control
 	{
 		return;
 	}
-	
+
 	if(FET_en)//设备自动控制FETs已使能
 	{
-		if(COV_error && (CHG_COV & CHG_protectionA))
+		//Settings:Protection:CHG FET Protections A
+		if((COV_error && (CHG_COV & CHG_protectionA)) | (OCC_error && (CHG_OCC & CHG_protectionA)) | (SCD_error && (CHG_SCD & CHG_protectionA)) | (COVL_error && (CHG_COVL & CHG_protectionC)) | (SCDL_error && (CHG_SCDL & CHG_protectionC)))
 			CHG_ctrl = 0;
 		else
 			CHG_ctrl = 1;
-		
-		if(COVL_error && (CHG_COVL & CHG_protectionC))
-			CHG_ctrl = 0;
-		else
-			CHG_ctrl = 1;
-		
-		if(CUV_error && (DSG_CUV & DSG_protectionA))
+
+		//Settings:Protection:CHG FET Protections B
+		//Settings:Protection:CHG FET Protections C
+
+		//Settings:Protection:DSG FET Protections A
+		if((CUV_error && (DSG_CUV & DSG_protectionA)) | (OCD1_error && (DSG_OCD1 & DSG_protectionA)) | (OCD2_error && (DSG_OCD2 & DSG_protectionA)) | (SCD_error && (DSG_SCD & DSG_protectionA)) | (OCDL_error && (DSG_OCDL & DSG_protectionC)) | (SCDL_error && (DSG_SCDL & DSG_protectionC)) | (OCD3_error && (DSG_OCD3 & DSG_protectionC)))
 			DSG_ctrl = 0;
 		else
 			DSG_ctrl = 1;
+
 	}
 	else//完全手动控制FETs(FET_TEST模式)
 		return;
-
+	
 	*CHG_ON = CHG_ctrl;
 	*DSG_ON = DSG_ctrl;
 }

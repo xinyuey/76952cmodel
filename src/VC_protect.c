@@ -41,7 +41,7 @@ StateMachine COV_State = NORMAL;
 StateMachine CUV_State = NORMAL;
 StateMachine_Lacth COVL_State = LATCH_RESET;
 
-uint8_t COV_Comp(uint16_t threshold,const uint16_t *CellVoltage)
+uint8_t COV_Comp(const uint16_t *CellVoltage,uint16_t threshold)
 {
     uint16_t max_Vcell = 0;
     for(int i=0;i<16;i++)
@@ -57,7 +57,7 @@ uint8_t COV_Comp(uint16_t threshold,const uint16_t *CellVoltage)
         return 0;
 }
 
-uint8_t CUV_Comp(uint16_t threshold,const uint16_t *CellVoltage)
+uint8_t CUV_Comp(const uint16_t *CellVoltage,uint16_t threshold)
 {
     uint16_t min_Vcell = *CellVoltage;
     for(int i=1;i<16;i++)
@@ -74,13 +74,15 @@ uint8_t CUV_Comp(uint16_t threshold,const uint16_t *CellVoltage)
 
 void COV_protect
 (
-                const uint16_t *CellVoltage,     //input
-                const uint16_t COV_th,          //input
-                const uint16_t COV_delay,       //input
-                const uint16_t COV_rec,         //input
-                const uint8_t recoverytime,     //input
-                uint8_t *COV_alert,             //output
-                uint8_t *COV_error              //output
+				//input
+                const uint16_t *CellVoltage,     
+                const uint16_t COV_th,          
+                const uint16_t COV_delay,      
+                const uint8_t COV_rec_hys,         
+                const uint8_t recoverytime,
+                //output
+                uint8_t *COV_alert,             
+                uint8_t *COV_error              
 )              
 {
     uint8_t alert,error;
@@ -93,7 +95,7 @@ void COV_protect
             //     clearFlags(XCHG,AlarmRawStatus);
             alert = 0;
             error = 0;
-            if(COV_Comp(COV_th,CellVoltage))
+            if(COV_Comp(CellVoltage,COV_th))
             {
                 COV_counter ++;
                 COV_State = ALERT;
@@ -105,7 +107,8 @@ void COV_protect
         case ALERT:
             // setFlags(COV_ALERT,SafetyAlertA);	//Safety Alert A[COV] = 1;
             alert = 1;
-            if(COV_counter == COV_delay-1 && COV_Comp(COV_th,CellVoltage))
+			error = 0;
+            if(COV_counter == COV_delay-1 && COV_Comp(CellVoltage,COV_th))
             {
                 COV_counter = 0;
                 COV_State = TRIP;
@@ -113,7 +116,7 @@ void COV_protect
                 if(COVL_State != LATCH_TRIP)    //COVL触发后就不计数了
                     COVL_counter ++;    //放在这是为识别COV_Fault上升沿，即COV_Fault上升沿计数值达到锁存阈值，会触发COVL
             }    
-            else if (!COV_Comp(COV_th,CellVoltage))
+            else if (!COV_Comp(CellVoltage,COV_th))
             {
                 COV_counter = 0;
                 COV_State = NORMAL;
@@ -128,14 +131,14 @@ void COV_protect
             //     setFlags(XCHG,AlarmRawStatus);
             alert = 0;
             error = 1;
-            if (COV_recounter == recoverytime-1 && !COV_Comp((COV_th - COV_rec),CellVoltage))
+            if (COV_recounter == recoverytime-1 && !COV_Comp(CellVoltage,(COV_th - COV_rec_hys)))
             {
                 COV_recounter = 0;
                 COVL_DEC_counter = 0;
                 COV_State = NORMAL;
 				printf("\nRecovery: COV\n");
             }   
-            else if(!COV_Comp((COV_th - COV_rec),CellVoltage))
+            else if(!COV_Comp(CellVoltage,(COV_th - COV_rec_hys)))
             {
                 COV_recounter ++;
             }
@@ -143,11 +146,7 @@ void COV_protect
         default:
             break;
     }
-    // for(int i=0;i<2;i++)
-    // {
-    //     *COV_flag = flag[i];
-    //     COV_flag ++;
-    // }
+	
     *COV_alert = alert;
     *COV_error = error;
 
@@ -155,13 +154,15 @@ void COV_protect
 
 void CUV_protect
 (
-                const uint16_t *CellVoltage,     //input
-                const uint16_t CUV_th,          //input
-                const uint16_t CUV_delay,       //input
-                const uint16_t CUV_rec,         //input
-                const uint8_t recoverytime,     //input
-                uint8_t *CUV_alert,             //output
-                uint8_t *CUV_error              //output
+				//input
+				const uint16_t *CellVoltage,     
+                const uint16_t CUV_th,          
+                const uint16_t CUV_delay,       
+                const uint8_t CUV_rec_hys,         
+                const uint8_t recoverytime,     
+                //output
+                uint8_t *CUV_alert,             
+                uint8_t *CUV_error              
 )
 {
     uint8_t alert,error;
@@ -174,7 +175,7 @@ void CUV_protect
             //     clearFlags(XDSG,AlarmRawStatus);
             alert = 0;
             error = 0;
-            if(CUV_Comp(CUV_th,CellVoltage))
+            if(CUV_Comp(CellVoltage,CUV_th))
             {
                 CUV_counter ++;
                 CUV_State = ALERT;
@@ -184,13 +185,14 @@ void CUV_protect
         case ALERT:
             // setFlags(CUV_ALERT,SafetyAlertA);	//Safety Alert A[CUV] = 1;
             alert = 1;
-            if(CUV_counter == CUV_delay-1 && CUV_Comp(CUV_th,CellVoltage))
+			error = 0;
+            if(CUV_counter == CUV_delay-1 && CUV_Comp(CellVoltage,CUV_th))
             {
                 CUV_counter = 0;
                 CUV_State = TRIP;
 				printf("\nError: CUV\n");
             }    
-            else if (!CUV_Comp(CUV_th,CellVoltage))
+            else if (!CUV_Comp(CellVoltage,CUV_th))
             {
                 CUV_counter = 0;
                 CUV_State = NORMAL;
@@ -205,36 +207,34 @@ void CUV_protect
             //     setFlags(XDSG,AlarmRawStatus);
             alert = 0;
             error = 1;
-            if (CUV_recounter == recoverytime-1 && !CUV_Comp((CUV_th + CUV_rec),CellVoltage))
+            if (CUV_recounter == recoverytime-1 && !CUV_Comp(CellVoltage,(CUV_th + CUV_rec_hys)))
             {
                 CUV_recounter = 0;
                 CUV_State = NORMAL;
 				printf("\nRecovery: CUV\n");
             }   
-            else if(!CUV_Comp((CUV_th + CUV_rec),CellVoltage))
+            else if(!CUV_Comp(CellVoltage,(CUV_th + CUV_rec_hys)))
             {
                 CUV_recounter ++;
             }
             break;
-        // case RECOVERY:
-        //     COV_Fault = 0;	//Safety Status A[COV] = 0;
-        //     COV_State = NORMAL;
-        //     COVL_DEC_counter = 0;
-        //     break;
         default:
             break;
     }
+	
     *CUV_alert = alert;
     *CUV_error = error;
 }
 
 void COVL_protect
 (
-                const uint8_t COVL_limit,           //input
-                const uint8_t COVL_dec_delay,       //input
-                const uint8_t COVL_recoverytime,    //input
-                uint8_t *COVL_alert,                //output
-                uint8_t *COVL_error                 //output
+				//input
+                const uint8_t COVL_limit,           
+                const uint8_t COVL_dec_delay,       
+                const uint8_t COVL_recoverytime,
+                //output
+                uint8_t *COVL_alert,                
+                uint8_t *COVL_error                 
 )
 {
     uint8_t alert,error;
@@ -256,6 +256,7 @@ void COVL_protect
         case LATCH_ALERT:
             // setFlags(COVL_ALERT,SafetyAlertC);			//Safety Alert C[COVL] = 1;
             alert = 1;
+			error = 0;
             if(COVL_counter == COVL_limit)
             {
                 COVL_counter = 0;
@@ -286,6 +287,7 @@ void COVL_protect
         default:
             break;
     }
+	
     *COVL_alert = alert;
     *COVL_error = error;
 }
