@@ -66,6 +66,7 @@ void FET_auto_control
 				const uint8_t OCD3_error,
 				const uint8_t OCDL_error,
 				const uint8_t OCC_error,
+				const uint8_t PTOS_error,
 				const int16_t PCHG_startvoltage,
 				const int16_t PCHG_stopvoltage,
 				const uint8_t PDSG_timeout,
@@ -115,7 +116,9 @@ void FET_auto_control
 	            min_Vcell = *CellVoltage;
 	        CellVoltage ++;
 	    }
-		if(min_Vcell < PCHG_startvoltage)
+		if(PTOS_error)
+			PCHG_ctrl = 0;
+		else if(min_Vcell < PCHG_startvoltage)
 			PCHG_ctrl = 1;
 		else if(PCHG_ctrl == 1 && min_Vcell >= PCHG_stopvoltage)
 			PCHG_ctrl = 0;
@@ -147,3 +150,44 @@ void FET_auto_control
 	else if(PDSG_ctrl == 0)
 		*DSG_ON = DSG_ctrl;
 }
+
+uint8_t PTO_counter=0;
+uint8_t pto_error=0;
+
+void PTO_protect(
+			//input
+			const int16_t CC1_current,
+			const int16_t current,
+			const uint8_t PCHG_on,
+			const uint16_t PTO_delay,
+			const int16_t PTO_charge_th,
+			const int16_t dsg_current_th,
+			const int16_t PTO_reset,
+			//output
+			uint8_t *PTOS_alert,
+			uint8_t *PTOS_error
+		   )
+{
+	uint8_t alert;
+	if(PCHG_on && (CC1_current < PTO_charge_th))
+		alert = 1;
+	else
+		alert = 0;
+	
+	if(current < dsg_current_th && CC1_current >= PTO_reset)//这里用的CC1电流,实际应该换算成电荷量再比较
+		PTO_counter = 0;
+	else if(alert == 1)
+		PTO_counter = PTO_counter;
+	else if(PTO_counter == PTO_delay)//计满清零，触发PTO故障
+	{
+		pto_error = 1;
+		PTO_counter = 0;
+	}
+	else if(PCHG_on && (CC1_current > PTO_charge_th))//预充电模式开启且CC1电流超过阈值
+		PTO_counter ++;
+
+	//pto_error只有主机命令可以清除
+	*PTOS_error = pto_error;
+	*PTOS_alert = alert;
+}
+

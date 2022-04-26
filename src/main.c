@@ -164,7 +164,12 @@ void update_config
 				uint8_t *OCC_TH,
 				uint8_t *OCC_DLY,
 				int16_t *OCC_CREC_TH,
-				int16_t *OCC_VREC_Delta
+				int16_t *OCC_VREC_Delta,
+
+				uint16_t *PTO_DLY,
+				int16_t *PTO_Charge_TH,
+				int16_t *PTO_RESET,
+				int16_t *DSG_Current_TH
 )
 {
 	*CUV_TH = 3000;         
@@ -224,6 +229,12 @@ void update_config
 	*OCC_DLY = 2;                             //实际延时 ms 级别
 	*OCC_CREC_TH = 1;                         // mV单位  原始寄存器单位为mA注意连接时单位
 	*OCC_VREC_Delta = 200;                    // 10mV单位
+
+	*PTO_DLY = 1800;
+	*PTO_Charge_TH = 250;
+	*PTO_RESET = 2;
+
+	*DSG_Current_TH = 100;
 }
 void update_register
 (
@@ -252,7 +263,9 @@ void update_register
 			   const uint8_t OCDL_alert,
 			   const uint8_t OCDL_error,
 			   const uint8_t OCC_alert,
-			   const uint8_t OCC_error
+			   const uint8_t OCC_error,
+			   const uint8_t PTOS_alert,
+			   const uint8_t PTOS_error
 )
 {
 	//电池电压
@@ -284,12 +297,10 @@ void update_register
 //	writeDirectMemory(safetystatusB, SafetyStatusB);
 
 
-	safetyalertC = COVL_alert<<4 | OCDL_alert<<5 | SCDL_alert<<6 | OCD3_alert<<7;
-//	safetyalertC = PTOS_alert<<3 | COVL_alert<<4 | OCDL_alert<<5 | SCDL_alert<<6 | OCD3_alert<<7;
+	safetyalertC = PTOS_alert<<3 | COVL_alert<<4 | OCDL_alert<<5 | SCDL_alert<<6 | OCD3_alert<<7;
 	writeDirectMemory(safetyalertC, SafetyAlertC);
 
-	safetystatusC = COVL_error<<4 | OCDL_error<<5 | SCDL_error<<6 | OCD3_error<<7;
-//	safetystatusC = PTOS_error<<3 | COVL_error<<4 | OCDL_error<<5 | SCDL_error<<6 | OCD3_error<<7;
+	safetystatusC = PTOS_error<<3 | COVL_error<<4 | OCDL_error<<5 | SCDL_error<<6 | OCD3_error<<7;
 	writeDirectMemory(safetystatusC, SafetyStatusC);
 
 	fetstatus = CHG_FET | PCHG_FET<<1 | DSG_FET<<2 | PDSG_FET<<3 ;
@@ -374,6 +385,12 @@ void BQ76952
 	int16_t PCHG_StopVoltage;
 	uint8_t PDSG_Timeout;
 	uint8_t PDSG_StopDelta;
+
+	uint16_t PTO_DLY;
+	int16_t PTO_Charge_TH;
+	int16_t PTO_RESET;
+	
+	int16_t DSG_Current_TH;
 	
     uint8_t CUV_alert;
     uint8_t CUV_error;
@@ -395,9 +412,11 @@ void BQ76952
 	uint8_t OCD3_error;
 	uint8_t OCDL_alert;
 	uint8_t OCDL_error;
-	
 	uint8_t OCC_alert;
 	uint8_t OCC_error;
+	
+	uint8_t PTOS_alert;
+	uint8_t PTOS_error;
 	
 	uint8_t CHG_ON;
 	uint8_t DSG_ON;
@@ -454,7 +473,11 @@ void BQ76952
 				&OCC_TH,
 				&OCC_DLY,
 				&OCC_CREC_TH,
-				&OCC_VREC_Delta
+				&OCC_VREC_Delta,
+				&PTO_DLY,
+				&PTO_Charge_TH,
+				&PTO_RESET,
+				&DSG_Current_TH
 				);
 	
     CUV_protect(
@@ -573,6 +596,20 @@ void BQ76952
 				&OCC_alert,
 				&OCC_error
 				);
+
+	PTO_protect(
+				//input
+				CC1_current,
+				current,
+				PCHG_on,
+				PTO_DLY,
+				PTO_Charge_TH,
+				DSG_Current_TH,
+				PTO_RESET,
+				//output
+				&PTOS_alert,
+				&PTOS_error
+			   );
 	
 	uint8_t LD_TOS_Delta = 10;	//用于PDSG基于电压关闭机制（阈值PDSG_StopDelta）
 	FET_auto_control(
@@ -599,6 +636,7 @@ void BQ76952
 				OCD3_error,
 				OCDL_error,
 				OCC_error,
+				PTOS_error,
 				PCHG_StartVoltage,
 				PCHG_StopVoltage,
 				PDSG_Timeout,
@@ -636,7 +674,9 @@ void BQ76952
 				OCDL_alert,
 				OCDL_error,
 				OCC_alert,
-				OCC_error
+				OCC_error,
+				PTOS_alert,
+				PTOS_error
 				);
 	
 	*CHG_on = CHG_ON;
