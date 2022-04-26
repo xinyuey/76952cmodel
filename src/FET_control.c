@@ -23,6 +23,8 @@
 #define CHG_OCC BIT(4)
 #define CHG_SCD BIT(7)
 //#define CHGFETProtectionsC 0x9267
+#define CHG_HWDF BIT(1)
+#define CHG_PTO BIT(2)
 #define CHG_COVL BIT(4)
 #define CHG_SCDL BIT(6)
 //#define DSGFETProtectionsA 0x9269
@@ -31,6 +33,7 @@
 #define DSG_OCD2 BIT(6)
 #define DSG_SCD BIT(7)
 //#define DSGFETProtectionsC 0x926B
+#define DSG_HWDF BIT(1)
 #define DSG_OCDL BIT(5)
 #define DSG_SCDL BIT(6)
 #define DSG_OCD3 BIT(7)
@@ -116,7 +119,7 @@ void FET_auto_control
 	            min_Vcell = *CellVoltage;
 	        CellVoltage ++;
 	    }
-		if(PTOS_error)
+		if(PTOS_error && (CHG_PTO & CHG_protectionC))
 			PCHG_ctrl = 0;
 		else if(min_Vcell < PCHG_startvoltage)
 			PCHG_ctrl = 1;
