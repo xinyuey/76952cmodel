@@ -61,7 +61,7 @@ int main()
     uint16_t CellVoltage [16] = {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
 	uint16_t charger,LD;                            //充电器检测结果与负载检测结果
 	int16_t  current;                               //电流结果输入
-	uint8_t CHG_ON,DSG_ON;
+	uint8_t CHG_ON,DSG_ON,PCHG_ON,PDSG_ON;
     FILE *fp;
     //fp = fopen("../sim/COV_COVL_TEST.txt","r");    //testcase自定义Vcell
     //fp = fopen("../sim/CUV_TEST.txt","r");
@@ -88,10 +88,12 @@ int main()
 		printf("\n#%d\n",cycle_counter);
 		
         BQ76952_Vcell(fp,&CellVoltage,&current,&charger,&LD);  //Supply to VC1-VC16
-        BQ76952(&CellVoltage,current,charger,LD,&CHG_ON,&DSG_ON);//DUT_BQ76952
+        BQ76952(&CellVoltage,current,charger,LD,&CHG_ON,&DSG_ON,&PCHG_ON,&PDSG_ON);//DUT_BQ76952
 
 		printf("CHG_ON = %d\n",CHG_ON);
 		printf("DSG_ON = %d\n",DSG_ON);
+		printf("PCHG_ON = %d\n",PCHG_ON);
+		printf("PDSG_ON = %d\n",PDSG_ON);
     }
 //等待外部输入命令序列使用示例
 //	while(1)
@@ -120,19 +122,25 @@ void update_config
 				uint16_t *CUV_DLY,
 				uint16_t *COV_DLY,
 				uint8_t *RecoveryTime,
-				
 				uint8_t *COVL_Limit,
 				uint8_t *COVL_DEC_DLY,
 				uint8_t *COVL_RecoveryTime,
+				
 				uint8_t *FET_ctrl_en,
 				uint8_t *FET_init_off,
 				uint8_t *FET_en,
+				uint8_t *PDSG_en,
 				uint8_t *CHG_protectionA,
 				uint8_t *CHG_protectionB,
 				uint8_t *CHG_protectionC,
 				uint8_t *DSG_protectionA,
 				uint8_t *DSG_protectionB,
 				uint8_t *DSG_protectionC,
+				int16_t *PCHG_StartVoltage,
+				int16_t *PCHG_StopVoltage,
+				uint8_t *PDSG_Timeout,
+				uint8_t *PDSG_StopDelta,
+				
 				uint8_t *SCD_TH,                 
 				uint8_t *SCD_DLY,
 				uint8_t *SCD_REC_DLY,
@@ -148,7 +156,6 @@ void update_config
 				uint8_t *OCD3_TH,                          
 				uint8_t *OCD3_DLY,                            
 				int16_t *OCD_REC_TH,                       
-
 				uint8_t *OCDL_Limit,                          
 				uint8_t *OCDL_DEC_DLY,                    
 				uint8_t *OCDL_RecoveryTime,                 
@@ -175,13 +182,17 @@ void update_config
 	*FET_ctrl_en = 1;
 	*FET_init_off = 0;
 	*FET_en = 1;
-
+	*PDSG_en = 1;
 	*CHG_protectionA = 0x98;
 	*CHG_protectionB = 0xD5;
 	*CHG_protectionC = 0x56;
 	*DSG_protectionA = 0xE4;
 	*DSG_protectionB = 0xE6;
 	*DSG_protectionC = 0xE2;
+	*PCHG_StartVoltage = 0;
+	*PCHG_StopVoltage = 0;
+	*PDSG_Timeout = 5;
+	*PDSG_StopDelta = 50;
 
 	*SCD_TH = 100;                            //单位mv,原始寄存器为译码值
 	*SCD_DLY = 2;                             //实际延时很小 us 级别
@@ -218,8 +229,10 @@ void update_register
 (
 			   //input
 			   const uint16_t *CellVoltage,
-			   const uint8_t CHG_ON,
-			   const uint8_t DSG_ON,
+			   const uint8_t CHG_FET,
+			   const uint8_t DSG_FET,
+			   const uint8_t PCHG_FET,
+			   const uint8_t PDSG_FET,
 			   const uint8_t CUV_alert,
 			   const uint8_t CUV_error,
 			   const uint8_t COV_alert,
@@ -279,8 +292,8 @@ void update_register
 //	safetystatusC = PTOS_error<<3 | COVL_error<<4 | OCDL_error<<5 | SCDL_error<<6 | OCD3_error<<7;
 	writeDirectMemory(safetystatusC, SafetyStatusC);
 
-	fetstatus = CHG_ON | DSG_ON<<2;
-	//	fetstatus = CHG_ON | PCHG_ON<<1 | DSG_ON<<2 | PDSG_ON<<3 | DCHG_PIN<<4 | DDSG_PIN<<5 | ALRT_PIN<<6;	
+	fetstatus = CHG_FET | PCHG_FET<<1 | DSG_FET<<2 | PDSG_FET<<3 ;
+	//	fetstatus = CHG_FET | PCHG_FET<<1 | DSG_FET<<2 | PDSG_FET<<3 | DCHG_PIN<<4 | DDSG_PIN<<5 | ALRT_PIN<<6;	
 	writeDirectMemory(fetstatus, FETStatus);
 
 }
@@ -300,9 +313,9 @@ void BQ76952
 //                const uint8_t DDSG,          
 				//output
                 uint8_t *CHG_on,                
-                uint8_t *DSG_on                
-//                uint8_t *PCHG_on,               
-//                uint8_t *PDSG_on,              
+                uint8_t *DSG_on,               
+                uint8_t *PCHG_on,               
+                uint8_t *PDSG_on              
 //                uint8_t *Alert 
 )
 {
@@ -349,6 +362,7 @@ void BQ76952
 	uint8_t FET_ctrl_en;
 	uint8_t FET_init_off;
 	uint8_t FET_en;
+	uint8_t PDSG_en;
 
 	uint8_t CHG_protectionA;
 	uint8_t CHG_protectionB;
@@ -356,6 +370,10 @@ void BQ76952
 	uint8_t DSG_protectionA;
 	uint8_t DSG_protectionB;
 	uint8_t DSG_protectionC;
+	int16_t PCHG_StartVoltage;
+	int16_t PCHG_StopVoltage;
+	uint8_t PDSG_Timeout;
+	uint8_t PDSG_StopDelta;
 	
     uint8_t CUV_alert;
     uint8_t CUV_error;
@@ -383,6 +401,8 @@ void BQ76952
 	
 	uint8_t CHG_ON;
 	uint8_t DSG_ON;
+	uint8_t PCHG_ON;
+	uint8_t PDSG_ON;
 
 
 	update_config(
@@ -400,12 +420,17 @@ void BQ76952
 				&FET_ctrl_en,
 				&FET_init_off,
 				&FET_en,
+				&PDSG_en,
 				&CHG_protectionA,
 				&CHG_protectionB,
 				&CHG_protectionC,
 				&DSG_protectionA,
 				&DSG_protectionB,
 				&DSG_protectionC,
+				&PCHG_StartVoltage,
+				&PCHG_StopVoltage,
+				&PDSG_Timeout,
+				&PDSG_StopDelta,
 				&SCD_TH,
 				&SCD_DLY,
 				&SCD_REC_DLY,
@@ -534,7 +559,7 @@ void BQ76952
 				&OCDL_error
 				);
 	
-	int16_t Stack_Pack_Delta = 10;	//用于OCC的电压恢复机制
+	int16_t Stack_Pack_Delta = 10;	//用于OCC的电压恢复机制（阈值OCC_VREC_Delta）
 	OCC_protect(
 				//input
 				current,
@@ -548,11 +573,16 @@ void BQ76952
 				&OCC_alert,
 				&OCC_error
 				);
+	
+	uint8_t LD_TOS_Delta = 10;	//用于PDSG基于电压关闭机制（阈值PDSG_StopDelta）
 	FET_auto_control(
 				//input
+				CellVoltage,
+				LD_TOS_Delta,
 				FET_ctrl_en,
 				FET_init_off,
 				FET_en,
+				PDSG_en,
 				CHG_protectionA,
 				CHG_protectionB,
 				CHG_protectionC,
@@ -569,15 +599,24 @@ void BQ76952
 				OCD3_error,
 				OCDL_error,
 				OCC_error,
+				PCHG_StartVoltage,
+				PCHG_StopVoltage,
+				PDSG_Timeout,
+				PDSG_StopDelta,
 				//output
 				&CHG_ON,
-				&DSG_ON
+				&DSG_ON,
+				&PCHG_ON,
+				&PDSG_ON
 				);
+	
     update_register(
 				//input
 				&CellVoltage,
 				CHG_ON,
 				DSG_ON,
+				PCHG_ON,
+				PDSG_ON,
 				CUV_alert,
 				CUV_error,
 				COV_alert,
@@ -602,5 +641,7 @@ void BQ76952
 	
 	*CHG_on = CHG_ON;
 	*DSG_on = DSG_ON;
-
+	*PCHG_on = PCHG_ON;
+	*PDSG_on = PDSG_ON;
+	
 }

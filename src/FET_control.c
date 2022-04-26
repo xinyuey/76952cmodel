@@ -35,12 +35,21 @@
 #define DSG_SCDL BIT(6)
 #define DSG_OCD3 BIT(7)
 
+uint8_t PDSG_timer = 0;
+uint8_t CHG_ctrl=0;
+uint8_t DSG_ctrl=0;
+uint8_t PCHG_ctrl=0;
+uint8_t PDSG_ctrl=0;
+
 void FET_auto_control
 (
 				//input
+				const uint16_t *CellVoltage,
+				const uint8_t LD_TOS_delta,
 				const uint8_t FET_ctrl_en,		//0x9308 FETOptions[FET_CTRL_EN]
 				const uint8_t FET_init_off,		//0x9308 FETOptions[FET_INIT_OFF]
 				const uint8_t FET_en,			//0x9343 MfgStatusInit[FET_EN]
+				const uint8_t PDSG_en,			//0x9308 FETOptions[PDSG_EN]
 				const uint8_t CHG_protectionA,
 				const uint8_t CHG_protectionB,
 				const uint8_t CHG_protectionC,
@@ -57,12 +66,18 @@ void FET_auto_control
 				const uint8_t OCD3_error,
 				const uint8_t OCDL_error,
 				const uint8_t OCC_error,
+				const int16_t PCHG_startvoltage,
+				const int16_t PCHG_stopvoltage,
+				const uint8_t PDSG_timeout,
+				const uint8_t PDSG_stop_delta,
 				//output
 				uint8_t *CHG_ON,
-				uint8_t *DSG_ON
+				uint8_t *DSG_ON,
+				uint8_t *PCHG_ON,
+				uint8_t *PDSG_ON
 )
 {
-	uint8_t CHG_ctrl,DSG_ctrl;
+
 	
 	if(!FET_ctrl_en)//FETs未使能
 		return;
@@ -73,25 +88,62 @@ void FET_auto_control
 
 	if(FET_en)//设备自动控制FETs已使能
 	{
+		//CHG_ctrl
 		//Settings:Protection:CHG FET Protections A
 		if((COV_error && (CHG_COV & CHG_protectionA)) | (OCC_error && (CHG_OCC & CHG_protectionA)) | (SCD_error && (CHG_SCD & CHG_protectionA)) | (COVL_error && (CHG_COVL & CHG_protectionC)) | (SCDL_error && (CHG_SCDL & CHG_protectionC)))
 			CHG_ctrl = 0;
 		else
 			CHG_ctrl = 1;
-
 		//Settings:Protection:CHG FET Protections B
 		//Settings:Protection:CHG FET Protections C
 
+		//DSG_ctrl
+		uint8_t DSG_ctrl_temp = DSG_ctrl;
 		//Settings:Protection:DSG FET Protections A
 		if((CUV_error && (DSG_CUV & DSG_protectionA)) | (OCD1_error && (DSG_OCD1 & DSG_protectionA)) | (OCD2_error && (DSG_OCD2 & DSG_protectionA)) | (SCD_error && (DSG_SCD & DSG_protectionA)) | (OCDL_error && (DSG_OCDL & DSG_protectionC)) | (SCDL_error && (DSG_SCDL & DSG_protectionC)) | (OCD3_error && (DSG_OCD3 & DSG_protectionC)))
 			DSG_ctrl = 0;
 		else
 			DSG_ctrl = 1;
+		//Settings:Protection:DSG FET Protections B
+		//Settings:Protection:DSG FET Protections C
+		
+		//PCHG_ctrl
+		uint16_t min_Vcell = *CellVoltage;
+	    for(int i=1;i<16;i++)
+	    {
+	        if(*CellVoltage < min_Vcell)
+	            min_Vcell = *CellVoltage;
+	        CellVoltage ++;
+	    }
+		if(min_Vcell < PCHG_startvoltage)
+			PCHG_ctrl = 1;
+		else if(PCHG_ctrl == 1 && min_Vcell >= PCHG_stopvoltage)
+			PCHG_ctrl = 0;
+
+		//PDSG_ctrl
+		if(PDSG_timer == PDSG_timeout)//基于超时关闭PDSG
+			PDSG_ctrl = 0;
+		else if(PDSG_en && PDSG_ctrl && (LD_TOS_delta >= PDSG_stop_delta))//基于电压关闭PDSG
+			PDSG_ctrl = 0;
+		else if(PDSG_en && DSG_ctrl == 1 && DSG_ctrl_temp == 0)//识别到DSG_ctrl上升沿时，置1
+			PDSG_ctrl = 1;
+		else if(!PDSG_en || DSG_ctrl == 0)
+			PDSG_ctrl = 0;
+		
+		if(PDSG_timer == PDSG_timeout || PDSG_ctrl == 0)
+			PDSG_timer = 0;
+		else if(PDSG_ctrl == 1)
+			PDSG_timer++;
 
 	}
 	else//完全手动控制FETs(FET_TEST模式)
 		return;
 	
 	*CHG_ON = CHG_ctrl;
-	*DSG_ON = DSG_ctrl;
+	*PCHG_ON = PCHG_ctrl;
+	*PDSG_ON = PDSG_ctrl;
+	if(PDSG_ctrl == 1)//预放电阶段
+		*DSG_ON = 0;
+	else if(PDSG_ctrl == 0)
+		*DSG_ON = DSG_ctrl;
 }
