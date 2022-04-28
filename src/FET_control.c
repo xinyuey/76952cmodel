@@ -22,6 +22,12 @@
 #define CHG_COV BIT(3)
 #define CHG_OCC BIT(4)
 #define CHG_SCD BIT(7)
+//#define CHGFETProtectionsB 0x9266
+#define CHG_UTC BIT(0)
+#define CHG_UTINT BIT(2)
+#define CHG_OTC BIT(4)
+#define CHG_OTINT BIT(6)
+#define CHG_OTF BIT(7)
 //#define CHGFETProtectionsC 0x9267
 #define CHG_HWDF BIT(1)
 #define CHG_PTO BIT(2)
@@ -32,6 +38,12 @@
 #define DSG_OCD1 BIT(5)
 #define DSG_OCD2 BIT(6)
 #define DSG_SCD BIT(7)
+//#define DSGFETProtectionsB 0x926A
+#define DSG_UTD BIT(1)
+#define DSG_UTINT BIT(2)
+#define DSG_OTD BIT(5)
+#define DSG_OTINT BIT(6)
+#define DSG_OTF BIT(7)
 //#define DSGFETProtectionsC 0x926B
 #define DSG_HWDF BIT(1)
 #define DSG_OCDL BIT(5)
@@ -70,6 +82,11 @@ void FET_auto_control
 				const uint8_t OCDL_error,
 				const uint8_t OCC_error,
 				const uint8_t PTOS_error,
+				const uint8_t OTC_error,
+				const uint8_t OTD_error,
+				const uint8_t OTF_error,
+				const uint8_t UTC_error,
+				const uint8_t UTD_error,
 				const int16_t PCHG_startvoltage,
 				const int16_t PCHG_stopvoltage,
 				const uint8_t PDSG_timeout,
@@ -94,8 +111,8 @@ void FET_auto_control
 	{
 		//CHG_ctrl
 		//Settings:Protection:CHG FET Protections A
-		if((COV_error && (CHG_COV & CHG_protectionA)) | (OCC_error && (CHG_OCC & CHG_protectionA)) | (SCD_error && (CHG_SCD & CHG_protectionA)) | (COVL_error && (CHG_COVL & CHG_protectionC)) | (SCDL_error && (CHG_SCDL & CHG_protectionC)))
-			CHG_ctrl = 0;
+		if((COV_error && (CHG_COV & CHG_protectionA)) | (OCC_error && (CHG_OCC & CHG_protectionA)) | (SCD_error && (CHG_SCD & CHG_protectionA)) | (COVL_error && (CHG_COVL & CHG_protectionC)) | (SCDL_error && (CHG_SCDL & CHG_protectionC)) | (OTC_error && (CHG_OTC & CHG_protectionB)) | (OTF_error && (CHG_OTF & CHG_protectionB)) | (UTC_error && (CHG_UTC & CHG_protectionB)))
+ 			CHG_ctrl = 0;
 		else
 			CHG_ctrl = 1;
 		//Settings:Protection:CHG FET Protections B
@@ -104,7 +121,7 @@ void FET_auto_control
 		//DSG_ctrl
 		uint8_t DSG_ctrl_temp = DSG_ctrl;
 		//Settings:Protection:DSG FET Protections A
-		if((CUV_error && (DSG_CUV & DSG_protectionA)) | (OCD1_error && (DSG_OCD1 & DSG_protectionA)) | (OCD2_error && (DSG_OCD2 & DSG_protectionA)) | (SCD_error && (DSG_SCD & DSG_protectionA)) | (OCDL_error && (DSG_OCDL & DSG_protectionC)) | (SCDL_error && (DSG_SCDL & DSG_protectionC)) | (OCD3_error && (DSG_OCD3 & DSG_protectionC)))
+		if((CUV_error && (DSG_CUV & DSG_protectionA)) | (OCD1_error && (DSG_OCD1 & DSG_protectionA)) | (OCD2_error && (DSG_OCD2 & DSG_protectionA)) | (SCD_error && (DSG_SCD & DSG_protectionA)) | (OCDL_error && (DSG_OCDL & DSG_protectionC)) | (SCDL_error && (DSG_SCDL & DSG_protectionC)) | (OCD3_error && (DSG_OCD3 & DSG_protectionC)) | (OTD_error && (DSG_OTD & DSG_protectionB)) | (OTF_error && (DSG_OTF & DSG_protectionB)) | (UTD_error && (DSG_UTD & DSG_protectionB)))
 			DSG_ctrl = 0;
 		else
 			DSG_ctrl = 1;

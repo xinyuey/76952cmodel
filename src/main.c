@@ -7,12 +7,16 @@ void BQ76952_Vcell
 					uint16_t *CellVoltage,
 					int16_t *current,
 					uint16_t *charger,
-					uint16_t *LD)
+					uint16_t *LD,
+					int16_t *TS1,
+					int16_t *TS2,
+					int16_t *TS3)
 {
 	uint16_t VC[16];
 	int16_t current_temp;
 	uint16_t charger_temp;
 	uint16_t LD_temp;
+	int16_t TS1_temp,TS2_temp,TS3_temp;
 	
     for(int i=0;i<16;i++)
     {
@@ -27,10 +31,16 @@ void BQ76952_Vcell
     fscanf(file,"%hd",&current_temp);
     fscanf(file,"%hu",&charger_temp);
     fscanf(file,"%hu",&LD_temp);
-
+	fscanf(file,"%hd",&TS1_temp);
+	fscanf(file,"%hd",&TS2_temp);
+	fscanf(file,"%hd",&TS3_temp);
+	
 	*current = current_temp;
 	*charger = charger_temp;
 	*LD = LD_temp;
+	*TS1 = TS1_temp;
+	*TS2 = TS2_temp;
+	*TS3 = TS3_temp;
 }
 
 //void BQ76952_Init()
@@ -61,6 +71,7 @@ int main()
     uint16_t CellVoltage [16] = {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
 	uint16_t charger,LD;                            //充电器检测结果与负载检测结果
 	int16_t  current;                               //电流结果输入
+	int16_t TS1,TS2,TS3;
 	uint8_t CHG_ON,DSG_ON,PCHG_ON,PDSG_ON;
     FILE *fp;
     //fp = fopen("../sim/COV_COVL_TEST.txt","r");    //testcase自定义Vcell
@@ -87,10 +98,10 @@ int main()
 		cycle_counter++;
 		printf("\n#%d\n",cycle_counter);
 		
-        BQ76952_Vcell(fp,&CellVoltage,&current,&charger,&LD);  //Supply to VC1-VC16
-        BQ76952(&CellVoltage,current,charger,LD,&CHG_ON,&DSG_ON,&PCHG_ON,&PDSG_ON);//DUT_BQ76952
+        BQ76952_Vcell(fp,&CellVoltage,&current,&charger,&LD,&TS1,&TS2,&TS3);  //Supply to VC1-VC16
+        BQ76952(&CellVoltage,current,charger,LD,TS1,TS2,TS3,&CHG_ON,&DSG_ON,&PCHG_ON,&PDSG_ON);//DUT_BQ76952
 
-		printf("CHG_ON = %d\n",CHG_ON);
+		printf("\nCHG_ON = %d\n",CHG_ON);
 		printf("DSG_ON = %d\n",DSG_ON);
 		printf("PCHG_ON = %d\n",PCHG_ON);
 		printf("PDSG_ON = %d\n",PDSG_ON);
@@ -115,17 +126,8 @@ int main()
 }
 void update_config
 (
-				uint16_t *CUV_TH,
-				uint16_t *COV_TH,
-				uint8_t *CUV_REC_HYS,
-				uint8_t *COV_REC_HYS,
-				uint16_t *CUV_DLY,
-				uint16_t *COV_DLY,
-				uint8_t *RecoveryTime,
-				uint8_t *COVL_Limit,
-				uint8_t *COVL_DEC_DLY,
-				uint8_t *COVL_RecoveryTime,
-				
+				//output
+				//FET控制
 				uint8_t *FET_ctrl_en,
 				uint8_t *FET_init_off,
 				uint8_t *FET_en,
@@ -140,7 +142,18 @@ void update_config
 				int16_t *PCHG_StopVoltage,
 				uint8_t *PDSG_Timeout,
 				uint8_t *PDSG_StopDelta,
-				
+				//电压保护
+				uint16_t *CUV_TH,
+				uint16_t *COV_TH,
+				uint8_t *CUV_REC_HYS,
+				uint8_t *COV_REC_HYS,
+				uint16_t *CUV_DLY,
+				uint16_t *COV_DLY,
+				uint8_t *RecoveryTime,
+				uint8_t *COVL_Limit,
+				uint8_t *COVL_DEC_DLY,
+				uint8_t *COVL_RecoveryTime,
+				//电流保护
 				uint8_t *SCD_TH,                 
 				uint8_t *SCD_DLY,
 				uint8_t *SCD_REC_DLY,
@@ -165,11 +178,30 @@ void update_config
 				uint8_t *OCC_DLY,
 				int16_t *OCC_CREC_TH,
 				int16_t *OCC_VREC_Delta,
-
+				//温度保护
+				uint8_t *TS1_Config,
+				uint8_t *TS2_Config,
+				uint8_t *TS3_Config,
+				int8_t *OTC_TH,
+				uint8_t *OTC_DLY,
+				int8_t *OTC_REC_TH,
+				int8_t *OTD_TH,
+				uint8_t *OTD_DLY,
+				int8_t *OTD_REC_TH,
+				int8_t *OTF_TH,
+				uint8_t *OTF_DLY,
+				int8_t *OTF_REC_TH,
+				int8_t *UTC_TH,
+				uint8_t *UTC_DLY,
+				int8_t *UTC_REC_TH,
+				int8_t *UTD_TH,
+				uint8_t *UTD_DLY,
+				int8_t *UTD_REC_TH,
+				//预充电超时保护
 				uint16_t *PTO_DLY,
 				int16_t *PTO_Charge_TH,
 				int16_t *PTO_RESET,
-				int16_t *DSG_Current_TH
+				int16_t *DSG_Current_TH	
 )
 {
 	*CUV_TH = 3000;         
@@ -235,37 +267,72 @@ void update_config
 	*PTO_RESET = 2;
 
 	*DSG_Current_TH = 100;
+	
+	*TS1_Config = 0x07; 
+	*TS2_Config = 0x0B;
+	*TS3_Config = 0x0F;
+	*OTC_TH = 55;
+	*OTC_DLY = 2;
+	*OTC_REC_TH = 50;
+	*OTD_TH = 60;
+	*OTD_DLY = 2;
+	*OTD_REC_TH = 55; 
+	*OTF_TH = 80;
+	*OTF_DLY = 2;
+	*OTF_REC_TH = 65; 
+	*UTC_TH = 0;
+	*UTC_DLY = 2;
+	*UTC_REC_TH = 5; 
+	*UTD_TH = 0;
+	*UTD_DLY = 2;
+	*UTD_REC_TH = 5; 
 }
 void update_register
 (
-			   //input
-			   const uint16_t *CellVoltage,
-			   const uint8_t CHG_FET,
-			   const uint8_t DSG_FET,
-			   const uint8_t PCHG_FET,
-			   const uint8_t PDSG_FET,
-			   const uint8_t CUV_alert,
-			   const uint8_t CUV_error,
-			   const uint8_t COV_alert,
-			   const uint8_t COV_error,
-			   const uint8_t COVL_alert,
-			   const uint8_t COVL_error,
-			   const uint8_t SCD_alert,
-			   const uint8_t SCD_error,
-			   const uint8_t SCDL_alert,
-			   const uint8_t SCDL_error,
-			   const uint8_t OCD1_alert,
-			   const uint8_t OCD1_error,
-			   const uint8_t OCD2_alert,
-			   const uint8_t OCD2_error,
-			   const uint8_t OCD3_alert,
-			   const uint8_t OCD3_error,
-			   const uint8_t OCDL_alert,
-			   const uint8_t OCDL_error,
-			   const uint8_t OCC_alert,
-			   const uint8_t OCC_error,
-			   const uint8_t PTOS_alert,
-			   const uint8_t PTOS_error
+			   	//input
+			   	//电池电压
+			   	const uint16_t *CellVoltage,
+			   	//FET控制
+			   	const uint8_t CHG_FET,
+			   	const uint8_t DSG_FET,
+			   	const uint8_t PCHG_FET,
+			   	const uint8_t PDSG_FET,
+			   	//电压保护
+			   	const uint8_t CUV_alert,
+			   	const uint8_t CUV_error,
+			   	const uint8_t COV_alert,
+			   	const uint8_t COV_error,
+			   	const uint8_t COVL_alert,
+			   	const uint8_t COVL_error,
+			   	//电流保护
+			   	const uint8_t SCD_alert,
+			   	const uint8_t SCD_error,
+			   	const uint8_t SCDL_alert,
+			   	const uint8_t SCDL_error,
+			   	const uint8_t OCD1_alert,
+			   	const uint8_t OCD1_error,
+			   	const uint8_t OCD2_alert,
+			   	const uint8_t OCD2_error,
+			   	const uint8_t OCD3_alert,
+			   	const uint8_t OCD3_error,
+			   	const uint8_t OCDL_alert,
+			   	const uint8_t OCDL_error,
+			   	const uint8_t OCC_alert,
+			   	const uint8_t OCC_error,
+			   	//温度保护
+			   	const uint8_t OTC_alert,
+				const uint8_t OTC_error,
+				const uint8_t OTD_alert,
+				const uint8_t OTD_error,
+				const uint8_t OTF_alert,
+				const uint8_t OTF_error,
+				const uint8_t UTC_alert,
+				const uint8_t UTC_error,
+				const uint8_t UTD_alert,
+				const uint8_t UTD_error,
+			   	//预充电超时保护
+			   	const uint8_t PTOS_alert,
+			   	const uint8_t PTOS_error
 )
 {
 	//电池电压
@@ -289,13 +356,15 @@ void update_register
 	safetystatusA = CUV_error<<2 | COV_error<<3 | OCC_error<<4 | OCD1_error<<5 | OCD2_error<<6 | SCD_error<<7;
 	writeDirectMemory(safetystatusA, SafetyStatusA);
 
-
+	safetyalertB = UTC_alert | UTD_alert<<1 | OTC_alert<<3 | OTD_alert<<4 | OTF_alert<<6;
+	writeDirectMemory(safetyalertB, SafetyAlertB);
 //	safetyalertB = UTC_alert | UTD_alert<<1 | UTINT_alert<<2 | OTC_alert<<3 | OTD_alert<<4 | OTINT_alert<<5 | OTF_alert<<6;
 //	writeDirectMemory(safetyalertB, SafetyAlertB);
 
+	safetystatusB = UTC_error | UTD_error<<1 | OTC_error<<3 | OTD_error<<4 | OTF_error<<6;
+	writeDirectMemory(safetystatusB, SafetyStatusB);
 //	safetystatusB = UTC_error | UTD_error<<1 | UTINT_error<<2 | OTC_error<<3 | OTD_error<<4 | OTINT_error<<5 | OTF_error<<6;
 //	writeDirectMemory(safetystatusB, SafetyStatusB);
-
 
 	safetyalertC = PTOS_alert<<3 | COVL_alert<<4 | OCDL_alert<<5 | SCDL_alert<<6 | OCD3_alert<<7;
 	writeDirectMemory(safetyalertC, SafetyAlertC);
@@ -312,14 +381,13 @@ void update_register
 void BQ76952
 (
 				//input
-                const uint16_t *CellVoltage,       
-//                const uint16_t TS1,             
-//                const uint16_t TS2,             
-//                const uint16_t TS3,             
+                const uint16_t *CellVoltage,                   
                 const int16_t current,          
                 const uint16_t charger,         
-				const uint16_t LD,             
-
+				const uint16_t LD,
+				const int16_t TS1,             
+                const int16_t TS2,             
+                const int16_t TS3, 
 //                const uint8_t DCHG,           
 //                const uint8_t DDSG,          
 				//output
@@ -330,17 +398,17 @@ void BQ76952
 //                uint8_t *Alert 
 )
 {
-	uint16_t CUV_TH;         
+	uint16_t CUV_TH;
+	uint16_t CUV_DLY;
+	uint8_t CUV_REC_HYS;
     uint16_t COV_TH; 
-    uint8_t CUV_REC_HYS;
-    uint8_t COV_REC_HYS;
-    uint16_t CUV_DLY;
     uint16_t COV_DLY; 
-    uint8_t RecoveryTime;      
+    uint8_t COV_REC_HYS;     
     uint8_t COVL_Limit;        
     uint8_t COVL_DEC_DLY; 
     uint8_t COVL_RecoveryTime;
-
+	uint8_t RecoveryTime;
+	
 	uint8_t SCD_TH;            
 	uint8_t SCD_DLY;           
 	uint8_t SCD_REC_DLY;       
@@ -350,11 +418,6 @@ void BQ76952
 	uint8_t SCDL_RecoveryTime;
 	int16_t SCDL_REC_TH;
 	uint16_t SCDL_CURR_RECOV;
-
-	uint8_t OCC_TH;
-	uint8_t OCC_DLY;
-	int16_t OCC_CREC_TH;
-	int16_t OCC_VREC_Delta;
 	
 	uint8_t OCD1_TH;                           //单位2mv
 	uint8_t OCD1_DLY;                            //实际延时 ms 级别
@@ -369,6 +432,35 @@ void BQ76952
 	uint8_t OCDL_RecoveryTime;                 //实际 s 级别延时 Settings:Protection:Protection Configuration[OCDL_CURR_RECOV] 有效时该恢复机制才会起作用
 	int16_t OCDL_REC_TH;                       //mV单位  原始寄存器单位为mA注意连接时单位
 	uint16_t OCDL_CURR_RECOV;
+
+	uint8_t OCC_TH;
+	uint8_t OCC_DLY;
+	int16_t OCC_CREC_TH;
+	int16_t OCC_VREC_Delta;
+	
+	uint8_t TS1_Config;
+	uint8_t TS2_Config;
+	uint8_t TS3_Config;
+	int8_t OTC_TH;
+	uint8_t OTC_DLY;
+	int8_t OTC_REC_TH;
+	int8_t OTD_TH;
+	uint8_t OTD_DLY;
+	int8_t OTD_REC_TH;
+	int8_t OTF_TH;
+	uint8_t OTF_DLY;
+	int8_t OTF_REC_TH;
+	int8_t UTC_TH;
+	uint8_t UTC_DLY;
+	int8_t UTC_REC_TH;
+	int8_t UTD_TH;
+	uint8_t UTD_DLY;
+	int8_t UTD_REC_TH;
+
+	uint16_t PTO_DLY;
+	int16_t PTO_Charge_TH;
+	int16_t PTO_RESET;
+	int16_t DSG_Current_TH;
 	
 	uint8_t FET_ctrl_en;
 	uint8_t FET_init_off;
@@ -386,12 +478,6 @@ void BQ76952
 	uint8_t PDSG_Timeout;
 	uint8_t PDSG_StopDelta;
 
-	uint16_t PTO_DLY;
-	int16_t PTO_Charge_TH;
-	int16_t PTO_RESET;
-	
-	int16_t DSG_Current_TH;
-	
     uint8_t CUV_alert;
     uint8_t CUV_error;
     uint8_t COV_alert;
@@ -414,6 +500,17 @@ void BQ76952
 	uint8_t OCDL_error;
 	uint8_t OCC_alert;
 	uint8_t OCC_error;
+
+	uint8_t OTC_alert;
+	uint8_t OTC_error;
+	uint8_t OTD_alert;
+	uint8_t OTD_error;
+	uint8_t OTF_alert;
+	uint8_t OTF_error;
+	uint8_t UTC_alert;
+	uint8_t UTC_error;
+	uint8_t UTD_alert;
+	uint8_t UTD_error;
 	
 	uint8_t PTOS_alert;
 	uint8_t PTOS_error;
@@ -423,19 +520,9 @@ void BQ76952
 	uint8_t PCHG_ON;
 	uint8_t PDSG_ON;
 
-
 	update_config(
 				//output
-				&CUV_TH,
-				&COV_TH,
-				&CUV_REC_HYS,
-				&COV_REC_HYS,
-				&CUV_DLY,
-				&COV_DLY,
-				&RecoveryTime,
-				&COVL_Limit,
-				&COVL_DEC_DLY,
-				&COVL_RecoveryTime,
+				//FET控制
 				&FET_ctrl_en,
 				&FET_init_off,
 				&FET_en,
@@ -450,6 +537,18 @@ void BQ76952
 				&PCHG_StopVoltage,
 				&PDSG_Timeout,
 				&PDSG_StopDelta,
+				//电压保护
+				&CUV_TH,
+				&COV_TH,
+				&CUV_REC_HYS,
+				&COV_REC_HYS,
+				&CUV_DLY,
+				&COV_DLY,
+				&RecoveryTime,
+				&COVL_Limit,
+				&COVL_DEC_DLY,
+				&COVL_RecoveryTime,
+				//电流保护
 				&SCD_TH,
 				&SCD_DLY,
 				&SCD_REC_DLY,
@@ -474,6 +573,26 @@ void BQ76952
 				&OCC_DLY,
 				&OCC_CREC_TH,
 				&OCC_VREC_Delta,
+				//温度保护
+				&TS1_Config,
+				&TS2_Config,
+				&TS3_Config,
+				&OTC_TH,
+				&OTC_DLY,
+				&OTC_REC_TH,
+				&OTD_TH,
+				&OTD_DLY,
+				&OTD_REC_TH,
+				&OTF_TH,
+				&OTF_DLY,
+				&OTF_REC_TH,
+				&UTC_TH,
+				&UTC_DLY,
+				&UTC_REC_TH,
+				&UTD_TH,
+				&UTD_DLY,
+				&UTD_REC_TH,
+				//预充电超时保护
 				&PTO_DLY,
 				&PTO_Charge_TH,
 				&PTO_RESET,
@@ -597,15 +716,50 @@ void BQ76952
 				&OCC_error
 				);
 
+	Termistor_protect(
+				//input
+				TS1,				//TS1温度值（实际应输入电阻值，再转换为温度值）
+				TS2,				//TS2温度值（实际应输入电阻值，再转换为温度值）
+				TS3,				//TS3温度值（实际应输入电阻值，再转换为温度值）
+				TS1_Config,			//热敏电阻TS1引脚复用配置	
+				TS2_Config,			//热敏电阻TS2引脚复用配置
+				TS3_Config,			//热敏电阻TS3引脚复用配置
+				OTC_TH,
+				OTC_DLY,
+				OTC_REC_TH,
+				OTD_TH,
+				OTD_DLY,
+				OTD_REC_TH,
+				OTF_TH,
+				OTF_DLY,
+				OTF_REC_TH,
+				UTC_TH,
+				UTC_DLY,
+				UTC_REC_TH,
+				UTD_TH,
+				UTD_DLY,
+				UTD_REC_TH,
+				RecoveryTime,
+				//output
+				&OTC_alert,
+				&OTC_error,
+				&OTD_alert,
+				&OTD_error,
+				&OTF_alert,
+				&OTF_error,
+				&UTC_alert,
+				&UTC_error,
+				&UTD_alert,
+				&UTD_error);
 	PTO_protect(
 				//input
-				CC1_current,
-				current,
+				CC1_current,		//PTO触发电流值、PTO恢复电荷值
+				current,			//PTO恢复时应处于放电状态
 				PCHG_on,
 				PTO_DLY,
-				PTO_Charge_TH,
-				DSG_Current_TH,
-				PTO_RESET,
+				PTO_Charge_TH,		//PTO触发电流阈值
+				DSG_Current_TH,		//放电状态电流阈值
+				PTO_RESET,			//PTO恢复电荷阈值
 				//output
 				&PTOS_alert,
 				&PTOS_error
@@ -637,6 +791,11 @@ void BQ76952
 				OCDL_error,
 				OCC_error,
 				PTOS_error,
+				OTC_error,
+				OTD_error,
+				OTF_error,
+				UTC_error,
+				UTD_error,
 				PCHG_StartVoltage,
 				PCHG_StopVoltage,
 				PDSG_Timeout,
@@ -650,17 +809,21 @@ void BQ76952
 	
     update_register(
 				//input
+				//电池电压
 				&CellVoltage,
+				//FET控制
 				CHG_ON,
 				DSG_ON,
 				PCHG_ON,
 				PDSG_ON,
+				//电压保护
 				CUV_alert,
 				CUV_error,
 				COV_alert,
 				COV_error,
 				COVL_alert,
 				COVL_error,
+				//电流保护
 				SCD_alert,
 				SCD_error,
 				SCDL_alert,
@@ -675,6 +838,18 @@ void BQ76952
 				OCDL_error,
 				OCC_alert,
 				OCC_error,
+				//温度保护
+				OTC_alert,
+				OTC_error,
+				OTD_alert,
+				OTD_error,
+				OTF_alert,
+				OTF_error,
+				UTC_alert,
+				UTC_error,
+				UTD_alert,
+				UTD_error,
+				//预充电超时保护
 				PTOS_alert,
 				PTOS_error
 				);
