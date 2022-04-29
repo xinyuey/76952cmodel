@@ -182,6 +182,8 @@ void update_config
 				uint8_t *TS1_Config,
 				uint8_t *TS2_Config,
 				uint8_t *TS3_Config,
+				uint8_t	*TINT_EN,							
+				uint8_t *TINT_FETT,	
 				int8_t *OTC_TH,
 				uint8_t *OTC_DLY,
 				int8_t *OTC_REC_TH,
@@ -197,6 +199,12 @@ void update_config
 				int8_t *UTD_TH,
 				uint8_t *UTD_DLY,
 				int8_t *UTD_REC_TH,
+				int8_t *OTINT_TH,
+				uint8_t *OTINT_DLY,
+				int8_t *OTINT_REC_TH,
+				int8_t *UTINT_TH,
+				uint8_t *UTINT_DLY,
+				int8_t *UTINT_REC_TH,
 				//预充电超时保护
 				uint16_t *PTO_DLY,
 				int16_t *PTO_Charge_TH,
@@ -271,6 +279,8 @@ void update_config
 	*TS1_Config = 0x07; 
 	*TS2_Config = 0x0B;
 	*TS3_Config = 0x0F;
+	*TINT_EN = 0;							
+	*TINT_FETT = 0;	
 	*OTC_TH = 55;
 	*OTC_DLY = 2;
 	*OTC_REC_TH = 50;
@@ -286,6 +296,12 @@ void update_config
 	*UTD_TH = 0;
 	*UTD_DLY = 2;
 	*UTD_REC_TH = 5; 
+	*OTINT_TH = 85;
+	*OTINT_DLY = 2;
+	*OTINT_REC_TH = 80;
+	*UTINT_TH = -20;
+	*UTINT_DLY = 2;
+	*UTINT_REC_TH = -15;
 }
 void update_register
 (
@@ -330,6 +346,10 @@ void update_register
 				const uint8_t UTC_error,
 				const uint8_t UTD_alert,
 				const uint8_t UTD_error,
+				const uint8_t OTINT_alert,
+				const uint8_t OTINT_error,
+				const uint8_t UTINT_alert,
+				const uint8_t UTINT_error,
 			   	//预充电超时保护
 			   	const uint8_t PTOS_alert,
 			   	const uint8_t PTOS_error
@@ -356,15 +376,11 @@ void update_register
 	safetystatusA = CUV_error<<2 | COV_error<<3 | OCC_error<<4 | OCD1_error<<5 | OCD2_error<<6 | SCD_error<<7;
 	writeDirectMemory(safetystatusA, SafetyStatusA);
 
-	safetyalertB = UTC_alert | UTD_alert<<1 | OTC_alert<<3 | OTD_alert<<4 | OTF_alert<<6;
+	safetyalertB = UTC_alert | UTD_alert<<1 | UTINT_alert<<2 | OTC_alert<<3 | OTD_alert<<4 | OTINT_alert<<5 | OTF_alert<<6;
 	writeDirectMemory(safetyalertB, SafetyAlertB);
-//	safetyalertB = UTC_alert | UTD_alert<<1 | UTINT_alert<<2 | OTC_alert<<3 | OTD_alert<<4 | OTINT_alert<<5 | OTF_alert<<6;
-//	writeDirectMemory(safetyalertB, SafetyAlertB);
 
-	safetystatusB = UTC_error | UTD_error<<1 | OTC_error<<3 | OTD_error<<4 | OTF_error<<6;
+	safetystatusB = UTC_error | UTD_error<<1 | UTINT_error<<2 | OTC_error<<3 | OTD_error<<4 | OTINT_error<<5 | OTF_error<<6;
 	writeDirectMemory(safetystatusB, SafetyStatusB);
-//	safetystatusB = UTC_error | UTD_error<<1 | UTINT_error<<2 | OTC_error<<3 | OTD_error<<4 | OTINT_error<<5 | OTF_error<<6;
-//	writeDirectMemory(safetystatusB, SafetyStatusB);
 
 	safetyalertC = PTOS_alert<<3 | COVL_alert<<4 | OCDL_alert<<5 | SCDL_alert<<6 | OCD3_alert<<7;
 	writeDirectMemory(safetyalertC, SafetyAlertC);
@@ -441,6 +457,8 @@ void BQ76952
 	uint8_t TS1_Config;
 	uint8_t TS2_Config;
 	uint8_t TS3_Config;
+	uint8_t	TINT_EN;							
+	uint8_t TINT_FETT;							
 	int8_t OTC_TH;
 	uint8_t OTC_DLY;
 	int8_t OTC_REC_TH;
@@ -457,6 +475,13 @@ void BQ76952
 	uint8_t UTD_DLY;
 	int8_t UTD_REC_TH;
 
+	int8_t OTINT_TH;
+	uint8_t OTINT_DLY;
+	int8_t OTINT_REC_TH;
+	int8_t UTINT_TH;
+	uint8_t UTINT_DLY;
+	int8_t UTINT_REC_TH;
+	
 	uint16_t PTO_DLY;
 	int16_t PTO_Charge_TH;
 	int16_t PTO_RESET;
@@ -511,6 +536,11 @@ void BQ76952
 	uint8_t UTC_error;
 	uint8_t UTD_alert;
 	uint8_t UTD_error;
+	
+	uint8_t OTINT_alert;
+	uint8_t OTINT_error;
+	uint8_t UTINT_alert;
+	uint8_t UTINT_error;
 	
 	uint8_t PTOS_alert;
 	uint8_t PTOS_error;
@@ -577,6 +607,8 @@ void BQ76952
 				&TS1_Config,
 				&TS2_Config,
 				&TS3_Config,
+				&TINT_EN,							
+				&TINT_FETT,	
 				&OTC_TH,
 				&OTC_DLY,
 				&OTC_REC_TH,
@@ -592,6 +624,12 @@ void BQ76952
 				&UTD_TH,
 				&UTD_DLY,
 				&UTD_REC_TH,
+				&OTINT_TH,
+				&OTINT_DLY,
+				&OTINT_REC_TH,
+				&UTINT_TH,
+				&UTINT_DLY,
+				&UTINT_REC_TH,
 				//预充电超时保护
 				&PTO_DLY,
 				&PTO_Charge_TH,
@@ -715,8 +753,27 @@ void BQ76952
 				&OCC_alert,
 				&OCC_error
 				);
-
-	Termistor_protect(
+	
+	int16_t Internal_Temp = 40;		//内部温度测量值
+	InternT_protect(
+				//input
+				Internal_Temp,
+				TINT_EN,
+				TINT_FETT,
+				OTINT_TH,
+				OTINT_DLY,
+				OTINT_REC_TH,
+				UTINT_TH,
+				UTINT_DLY,
+				UTINT_REC_TH,
+				RecoveryTime,
+				//output
+				&OTINT_alert,
+				&OTINT_error,
+				&UTINT_alert,
+				&UTINT_error
+				);
+	TermistorT_protect(
 				//input
 				TS1,				//TS1温度值（实际应输入电阻值，再转换为温度值）
 				TS2,				//TS2温度值（实际应输入电阻值，再转换为温度值）
@@ -724,6 +781,9 @@ void BQ76952
 				TS1_Config,			//热敏电阻TS1引脚复用配置	
 				TS2_Config,			//热敏电阻TS2引脚复用配置
 				TS3_Config,			//热敏电阻TS3引脚复用配置
+				Internal_Temp,		//内部温度值
+				TINT_EN,			//内部温度作为电池温度使能位
+				TINT_FETT,			//内部温度作为FET温度使能位
 				OTC_TH,
 				OTC_DLY,
 				OTC_REC_TH,
@@ -780,6 +840,10 @@ void BQ76952
 				DSG_protectionA,
 				DSG_protectionB,
 				DSG_protectionC,
+				PCHG_StartVoltage,
+				PCHG_StopVoltage,
+				PDSG_Timeout,
+				PDSG_StopDelta,
 				COV_error,
 				COVL_error,
 				CUV_error,
@@ -796,10 +860,8 @@ void BQ76952
 				OTF_error,
 				UTC_error,
 				UTD_error,
-				PCHG_StartVoltage,
-				PCHG_StopVoltage,
-				PDSG_Timeout,
-				PDSG_StopDelta,
+				OTINT_error,
+				UTINT_error,
 				//output
 				&CHG_ON,
 				&DSG_ON,
@@ -849,6 +911,10 @@ void BQ76952
 				UTC_error,
 				UTD_alert,
 				UTD_error,
+				OTINT_alert,
+				OTINT_error,
+				UTINT_alert,
+				UTINT_error,
 				//预充电超时保护
 				PTOS_alert,
 				PTOS_error

@@ -71,6 +71,10 @@ void FET_auto_control
 				const uint8_t DSG_protectionA,
 				const uint8_t DSG_protectionB,
 				const uint8_t DSG_protectionC,
+				const int16_t PCHG_startvoltage,
+				const int16_t PCHG_stopvoltage,
+				const uint8_t PDSG_timeout,
+				const uint8_t PDSG_stop_delta,
 				const uint8_t COV_error,
 				const uint8_t COVL_error,
 				const uint8_t CUV_error,
@@ -87,10 +91,8 @@ void FET_auto_control
 				const uint8_t OTF_error,
 				const uint8_t UTC_error,
 				const uint8_t UTD_error,
-				const int16_t PCHG_startvoltage,
-				const int16_t PCHG_stopvoltage,
-				const uint8_t PDSG_timeout,
-				const uint8_t PDSG_stop_delta,
+				const uint8_t OTINT_error,
+				const uint8_t UTINT_error,
 				//output
 				uint8_t *CHG_ON,
 				uint8_t *DSG_ON,
@@ -111,22 +113,30 @@ void FET_auto_control
 	{
 		//CHG_ctrl
 		//Settings:Protection:CHG FET Protections A
-		if((COV_error && (CHG_COV & CHG_protectionA)) | (OCC_error && (CHG_OCC & CHG_protectionA)) | (SCD_error && (CHG_SCD & CHG_protectionA)) | (COVL_error && (CHG_COVL & CHG_protectionC)) | (SCDL_error && (CHG_SCDL & CHG_protectionC)) | (OTC_error && (CHG_OTC & CHG_protectionB)) | (OTF_error && (CHG_OTF & CHG_protectionB)) | (UTC_error && (CHG_UTC & CHG_protectionB)))
+		if((COV_error && (CHG_COV & CHG_protectionA)) | (OCC_error && (CHG_OCC & CHG_protectionA)) | (SCD_error && (CHG_SCD & CHG_protectionA)))
  			CHG_ctrl = 0;
+		//Settings:Protection:CHG FET Protections B
+		else if((UTC_error && (CHG_UTC & CHG_protectionB)) | (OTC_error && (CHG_OTC & CHG_protectionB)) | (OTF_error && (CHG_OTF & CHG_protectionB)) | (UTINT_error && (CHG_UTINT & CHG_protectionB)) | (OTINT_error && (CHG_OTINT & CHG_protectionB)))
+			CHG_ctrl = 0;
+		//Settings:Protection:CHG FET Protections C
+		else if((PTOS_error && (CHG_PTO & CHG_protectionC)) | (COVL_error && (CHG_COVL & CHG_protectionC)) | (SCDL_error && (CHG_SCDL & CHG_protectionC)))
+			CHG_ctrl = 0;
 		else
 			CHG_ctrl = 1;
-		//Settings:Protection:CHG FET Protections B
-		//Settings:Protection:CHG FET Protections C
-
+		
 		//DSG_ctrl
 		uint8_t DSG_ctrl_temp = DSG_ctrl;
 		//Settings:Protection:DSG FET Protections A
-		if((CUV_error && (DSG_CUV & DSG_protectionA)) | (OCD1_error && (DSG_OCD1 & DSG_protectionA)) | (OCD2_error && (DSG_OCD2 & DSG_protectionA)) | (SCD_error && (DSG_SCD & DSG_protectionA)) | (OCDL_error && (DSG_OCDL & DSG_protectionC)) | (SCDL_error && (DSG_SCDL & DSG_protectionC)) | (OCD3_error && (DSG_OCD3 & DSG_protectionC)) | (OTD_error && (DSG_OTD & DSG_protectionB)) | (OTF_error && (DSG_OTF & DSG_protectionB)) | (UTD_error && (DSG_UTD & DSG_protectionB)))
+		if((CUV_error && (DSG_CUV & DSG_protectionA)) | (OCD1_error && (DSG_OCD1 & DSG_protectionA)) | (OCD2_error && (DSG_OCD2 & DSG_protectionA)) | (SCD_error && (DSG_SCD & DSG_protectionA)))
+			DSG_ctrl = 0;
+		//Settings:Protection:DSG FET Protections B
+		else if((OTD_error && (DSG_OTD & DSG_protectionB)) | (OTF_error && (DSG_OTF & DSG_protectionB)) | (UTD_error && (DSG_UTD & DSG_protectionB)) | (UTINT_error && (DSG_UTINT & DSG_protectionB)) | (OTINT_error && (DSG_OTINT & DSG_protectionB)))
+			DSG_ctrl = 0;
+		//Settings:Protection:DSG FET Protections C
+		else if((OCDL_error && (DSG_OCDL & DSG_protectionC)) | (SCDL_error && (DSG_SCDL & DSG_protectionC)) | (OCD3_error && (DSG_OCD3 & DSG_protectionC)))
 			DSG_ctrl = 0;
 		else
 			DSG_ctrl = 1;
-		//Settings:Protection:DSG FET Protections B
-		//Settings:Protection:DSG FET Protections C
 		
 		//PCHG_ctrl
 		uint16_t min_Vcell = *CellVoltage;

@@ -39,6 +39,8 @@ StateMachine OTD_State = NORMAL;
 StateMachine OTF_State = NORMAL;
 StateMachine UTC_State = NORMAL;
 StateMachine UTD_State = NORMAL;
+StateMachine OTINT_State = NORMAL;
+StateMachine UTINT_State = NORMAL;
 
 uint8_t OTC_counter = 0;
 uint8_t OTC_recounter = 0;
@@ -50,6 +52,10 @@ uint8_t UTC_counter = 0;
 uint8_t UTC_recounter = 0;
 uint8_t UTD_counter = 0;
 uint8_t UTD_recounter = 0;
+uint8_t OTINT_counter = 0;
+uint8_t OTINT_recounter = 0;
+uint8_t UTINT_counter = 0;
+uint8_t UTINT_recounter = 0;
 
 void OTC_protect
 (
@@ -97,13 +103,13 @@ void OTC_protect
         case TRIP:
             alert = 0;
             error = 1;
-            if (OTC_recounter == recoverytime-1 && (max_cell_temp <= OTC_th))
+            if (OTC_recounter == recoverytime-1 && (max_cell_temp <= OTC_rec_th))
             {
                 OTC_recounter = 0;
                 OTC_State = NORMAL;
 				printf("\nRecovery: OTC\n");
             }   
-            else if(max_cell_temp <= OTC_th)
+            else if(max_cell_temp <= OTC_rec_th)
             {
                 OTC_recounter ++;
             }
@@ -161,13 +167,13 @@ void OTD_protect
         case TRIP:
             alert = 0;
             error = 1;
-            if (OTD_recounter == recoverytime-1 && (max_cell_temp <= OTD_th))
+            if (OTD_recounter == recoverytime-1 && (max_cell_temp <= OTD_rec_th))
             {
                 OTD_recounter = 0;
                 OTD_State = NORMAL;
 				printf("\nRecovery: OTD\n");
             }   
-            else if(max_cell_temp <= OTD_th)
+            else if(max_cell_temp <= OTD_rec_th)
             {
                 OTD_recounter ++;
             }
@@ -225,13 +231,13 @@ void OTF_protect
         case TRIP:
             alert = 0;
             error = 1;
-            if (OTF_recounter == recoverytime-1 && (max_fet_temp <= OTF_th))
+            if (OTF_recounter == recoverytime-1 && (max_fet_temp <= OTF_rec_th))
             {
                 OTF_recounter = 0;
                 OTF_State = NORMAL;
 				printf("\nRecovery: OTF\n");
             }   
-            else if(max_fet_temp <= OTF_th)
+            else if(max_fet_temp <= OTF_rec_th)
             {
                 OTF_recounter ++;
             }
@@ -289,13 +295,13 @@ void UTC_protect
         case TRIP:
             alert = 0;
             error = 1;
-            if (UTC_recounter == recoverytime-1 && (min_cell_temp >= UTC_th))
+            if (UTC_recounter == recoverytime-1 && (min_cell_temp >= UTC_rec_th))
             {
                 UTC_recounter = 0;
                 UTC_State = NORMAL;
 				printf("\nRecovery: UTC\n");
             }   
-            else if(min_cell_temp >= UTC_th)
+            else if(min_cell_temp >= UTC_rec_th)
             {
                 UTC_recounter ++;
             }
@@ -353,13 +359,13 @@ void UTD_protect
         case TRIP:
             alert = 0;
             error = 1;
-            if (UTD_recounter == recoverytime-1 && (min_cell_temp >= UTD_th))
+            if (UTD_recounter == recoverytime-1 && (min_cell_temp >= UTD_rec_th))
             {
                 UTD_recounter = 0;
                 UTD_State = NORMAL;
 				printf("\nRecovery: UTD\n");
             }   
-            else if(min_cell_temp >= UTD_th)
+            else if(min_cell_temp >= UTD_rec_th)
             {
                 UTD_recounter ++;
             }
@@ -371,8 +377,192 @@ void UTD_protect
     *UTD_alert = alert;
     *UTD_error = error;
 }
+void OTINT_protect
+(
+				//input
+				const int16_t Internal_Temp,
+				const int8_t OTINT_th,
+				const uint8_t OTINT_delay,
+				const int8_t OTINT_rec_th,
+				const uint8_t recoverytime,
+				//output
+				uint8_t *OTINT_alert,
+				uint8_t *OTINT_error
+)
+{
+	uint8_t alert,error;
+    switch (OTINT_State)
+    {
+        case NORMAL:   
+            alert = 0;
+            error = 0;
+            if(Internal_Temp > OTINT_th)
+            {
+                OTINT_counter ++;
+                OTINT_State = ALERT;
+				printf("\nAlert:  OTINT\n");
+            }
+            break;
+        case ALERT:
+            alert = 1;
+			error = 0;
+            if(OTINT_counter == OTINT_delay-1 && (Internal_Temp > OTINT_th))
+            {
+                OTINT_counter = 0;
+                OTINT_State = TRIP;
+				printf("\nError:  OTINT\n");
+            }    
+            else if (Internal_Temp <= OTINT_th)
+            {
+                OTINT_counter = 0;
+                OTINT_State = NORMAL;
+            }
+            else
+                OTINT_counter ++;
+            break;
+        case TRIP:
+            alert = 0;
+            error = 1;
+            if (OTINT_recounter == recoverytime-1 && (Internal_Temp <= OTINT_rec_th))
+            {
+                OTINT_recounter = 0;
+                OTINT_State = NORMAL;
+				printf("\nRecovery:  OTINT\n");
+            }   
+            else if(Internal_Temp <= OTINT_rec_th)
+            {
+                OTINT_recounter ++;
+            }
+            break;
+        default:
+            break;
+    }
+	
+    *OTINT_alert = alert;
+    *OTINT_error = error;
+}
+void UTINT_protect
+(
+				//input
+				const int16_t Internal_Temp,
+				const int8_t UTINT_th,
+				const uint8_t UTINT_delay,
+				const int8_t UTINT_rec_th,
+				const uint8_t recoverytime,
+				//output
+				uint8_t *UTINT_alert,
+				uint8_t *UTINT_error
+)
+{
+	uint8_t alert,error;
+    switch (UTINT_State)
+    {
+        case NORMAL:   
+            alert = 0;
+            error = 0;
+            if(Internal_Temp < UTINT_th)
+            {
+                UTINT_counter ++;
+                UTINT_State = ALERT;
+				printf("\nAlert:  UTINT\n");
+            }
+            break;
+        case ALERT:
+            alert = 1;
+			error = 0;
+            if(UTINT_counter == UTINT_delay-1 && (Internal_Temp < UTINT_th))
+            {
+                UTINT_counter = 0;
+                UTINT_State = TRIP;
+				printf("\nError:  UTINT\n");
+            }    
+            else if (Internal_Temp >= UTINT_th)
+            {
+                UTINT_counter = 0;
+                UTINT_State = NORMAL;
+            }
+            else
+                UTINT_counter ++;
+            break;
+        case TRIP:
+            alert = 0;
+            error = 1;
+            if (UTINT_recounter == recoverytime-1 && (Internal_Temp >= UTINT_rec_th))
+            {
+                UTINT_recounter = 0;
+                UTINT_State = NORMAL;
+				printf("\nRecovery:  UTINT\n");
+            }   
+            else if(Internal_Temp >= UTINT_rec_th)
+            {
+                UTINT_recounter ++;
+            }
+            break;
+        default:
+            break;
+    }
+	
+    *UTINT_alert = alert;
+    *UTINT_error = error;
+}
 
-void Termistor_protect
+void InternT_protect
+(
+				//input
+				const int16_t Internal_Temp,
+				const uint8_t TINT_en,
+				const uint8_t TINT_fett,
+				const int8_t OTINT_th,
+				const uint8_t OTINT_delay,
+				const int8_t OTINT_rec_th,
+				const int8_t UTINT_th,
+				const uint8_t UTINT_delay,
+				const int8_t UTINT_rec_th,
+				const uint8_t recoverytime,
+				//output
+				uint8_t *OTINT_alert,
+				uint8_t *OTINT_error,
+				uint8_t *UTINT_alert,
+				uint8_t *UTINT_error
+)
+{
+	uint8_t otint_alert,otint_error;
+	uint8_t utint_alert,utint_error;
+	if(TINT_en==1 || TINT_fett==1)//Internal_Temp被用作电池温度保护或FET温度保护，不用作内部温度保护
+		return;
+	else//内部温度保护
+	{
+		OTINT_protect(
+					//input
+					Internal_Temp,
+					OTINT_th,
+					OTINT_delay,
+					OTINT_rec_th,
+					recoverytime,
+					//output
+					&otint_alert,
+					&otint_error
+					);
+		UTINT_protect(
+					//input
+					Internal_Temp,
+					UTINT_th,
+					UTINT_delay,
+					UTINT_rec_th,
+					recoverytime,
+					//output
+					&utint_alert,
+					&utint_error
+					);
+		
+		*OTINT_alert = otint_alert;
+		*OTINT_error = otint_error;
+		*UTINT_alert = utint_alert;
+		*UTINT_alert = utint_error;
+	}
+}
+
+void TermistorT_protect
 (
 				//input
 				const int16_t TS1,
@@ -381,6 +571,9 @@ void Termistor_protect
 				const uint8_t TS1_config,
 				const uint8_t TS2_config,
 				const uint8_t TS3_config,
+				const int16_t Internal_Temp,
+				const uint8_t TINT_en,
+				const uint8_t TINT_fett,
 				const int8_t OTC_th,
 				const uint8_t OTC_delay,
 				const int8_t OTC_rec_th,
@@ -416,9 +609,9 @@ void Termistor_protect
 	uint8_t utc_alert=0,utc_error=0;
 	uint8_t utd_alert=0,utd_error=0;
 	
-	int16_t cell_temp[3] = {0};
-	uint8_t cell_temp_f[3] = {0};
-	int16_t fet_temp[3] = {0};
+	int16_t cell_temp[4] = {0};						//TS1,TS2,TS3,Internal_Temp
+	uint8_t cell_temp_f[4] = {0};
+	int16_t fet_temp[3] = {0};						//TS1,TS2,TS3,Internal_Temp
 	uint8_t fet_temp_f[3] = {0};
 	uint8_t TS1_pullup,TS2_pullup,TS3_pullup;		//热敏电阻上拉类型（18k/180k）
 	uint8_t TS1_poly,TS2_poly,TS3_poly;				//热敏电阻多项式类型（18k/180k）
@@ -437,13 +630,13 @@ void Termistor_protect
 	TS3_type = (TS_OPT_TYPE & TS3_config) >> 2;		//Settings:Configuration:TS3 Config[3:2]
 	TS3_func = TS_OPT_FUNC & TS3_config;			//Settings:Configuration:TS3 Config[1:0]
 
-	if(TS1_func == 0x03 && TS1_type == 0x01)	//电池温度
+	if(TS1_func == 0x03 && TS1_type == 0x01)//电池温度
 	{
 		cell_temp[0] = TS1;//实际上TS1寄存器存储的是电阻值，此处应进行电阻值和温度值的转换
 		cell_temp_f[0] = 1;
 		fet_temp_f[0] = 0;
 	}
-	else if(TS1_func == 0x03 && TS1_type == 0x03)	//FET温度
+	else if(TS1_func == 0x03 && TS1_type == 0x03)//FET温度
 	{
 		fet_temp[0] = TS1;
 		fet_temp_f[0] = 1;
@@ -457,13 +650,13 @@ void Termistor_protect
 		fet_temp_f[0] = 0;
 	}
 	
-	if(TS2_func == 0x03 && TS2_type == 0x01)	//电池温度
+	if(TS2_func == 0x03 && TS2_type == 0x01)//电池温度
 	{
 		cell_temp[1] = TS2;
 		cell_temp_f[1] = 1;
 		fet_temp_f[1] = 0;
 	}
-	else if(TS2_func == 0x03 && TS2_type == 0x03)	//FET温度
+	else if(TS2_func == 0x03 && TS2_type == 0x03)//FET温度
 	{
 		fet_temp[1] = TS2;
 		fet_temp_f[1] = 1;
@@ -477,13 +670,13 @@ void Termistor_protect
 		fet_temp_f[1] = 0;
 	}
 	
-	if(TS3_func == 0x03 && TS3_type == 0x01)	//电池温度
+	if(TS3_func == 0x03 && TS3_type == 0x01)//电池温度
 	{
 		cell_temp[2] = TS3;
 		cell_temp_f[2] = 1;
 		fet_temp_f[2] = 0;
 	}
-	else if(TS3_func == 0x03 && TS3_type == 0x03)	//FET温度
+	else if(TS3_func == 0x03 && TS3_type == 0x03)//FET温度
 	{
 		fet_temp[2] = TS3;
 		fet_temp_f[2] = 1;
@@ -496,17 +689,37 @@ void Termistor_protect
 		fet_temp[2] = 0;
 		fet_temp_f[2] = 0;
 	}
+
+	if(TINT_en == 1 && TINT_fett != 1)//电池温度
+	{
+		cell_temp[3] = Internal_Temp;
+		cell_temp_f[3] = 1;
+		fet_temp_f[3] = 0;
+	}
+	else if(TINT_en != 1 && TINT_fett == 1)//FET温度
+	{
+		fet_temp[3] = Internal_Temp;
+		fet_temp_f[3] = 1;
+		cell_temp_f[3] = 0;
+	}
+	else
+	{
+		cell_temp[3] = 0;
+		cell_temp_f[3] = 0;
+		fet_temp[3] = 0;
+		fet_temp_f[3] = 0;
+	}
 	
 	//min_cell_temp
 	int16_t min_cell_temp = 0x7fff;
-	for(int i=0;i<3;i++)
+	for(int i=0;i<4;i++)
 	{
 		if((cell_temp_f[i] == 1) && (cell_temp[i] < min_cell_temp))
 			min_cell_temp = cell_temp[i];	
 	}
 	//max_cell_temp
 	int16_t max_cell_temp = 0x8000;
-	for(int i=0;i<3;i++)
+	for(int i=0;i<4;i++)
 	{
 		if((cell_temp_f[i] == 1) && (cell_temp[i] > max_cell_temp))
 			max_cell_temp = cell_temp[i];
