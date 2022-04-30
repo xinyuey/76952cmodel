@@ -32,14 +32,19 @@ uint8_t COV_counter = 0;        //COV事件计数
 uint8_t COV_recounter = 0;      //COV恢复事件计数
 uint8_t CUV_counter = 0;        //CUV事件计数
 uint8_t CUV_recounter = 0;      //COV恢复事件计数
-
 uint8_t COVL_counter = 0;       //COV故障计数
 uint8_t COVL_DEC_counter = 0;   //计满仍未再次触发COV，则递减COVL_counter
 uint8_t COVL_REC_counter = 0;   //计满后，COVL自动恢复
 
+uint8_t SOV_counter = 0;       //SOV故障计数
+uint8_t SUV_counter = 0;       //SUV故障计数
+
 StateMachine COV_State = NORMAL;
 StateMachine CUV_State = NORMAL;
 StateMachine_Lacth COVL_State = LATCH_RESET;
+
+StateMachine SOV_State = NORMAL;
+StateMachine SUV_State = NORMAL;
 
 uint8_t COV_Comp(const uint16_t *CellVoltage,uint16_t threshold)
 {
@@ -291,3 +296,129 @@ void COVL_protect
     *COVL_alert = alert;
     *COVL_error = error;
 }
+
+void SOV_protect
+(
+				//input
+                const uint16_t *CellVoltage, 
+                const uint8_t PF_en,
+                const uint8_t SOV_en,
+                const int16_t SOV_th,          
+                const uint16_t SOV_delay,      
+                //output
+                uint8_t *SOV_alert,             
+                uint8_t *SOV_error   
+)
+{
+	uint8_t alert,error;
+	if(!PF_en || !SOV_en)//二次保护不使能，或SOV保护不使能
+	{
+		alert = 0;
+		error = 0;
+	}
+	else
+	{
+	    switch (SOV_State)
+	    {
+	        case NORMAL:   	     
+	            alert = 0;
+	            error = 0;
+	            if(COV_Comp(CellVoltage,SOV_th))
+	            {
+	                SOV_counter ++;
+	                SOV_State = ALERT;
+					printf("\nAlert: SOV\n");
+	            }
+	            break;
+	        case ALERT:
+	            alert = 1;
+				error = 0;
+	            if(SOV_counter == SOV_delay-1 && COV_Comp(CellVoltage,SOV_th))
+	            {
+	                SOV_counter = 0;
+	                SOV_State = TRIP;
+					printf("\nError: SOV\n");
+	            }    
+	            else if (!COV_Comp(CellVoltage,SOV_th))
+	            {
+	                SOV_counter = 0;
+	                SOV_State = NORMAL;
+	            }
+	            else
+	                SOV_counter ++;
+	            break;
+	        case TRIP:
+	            alert = 0;
+	            error = 1;
+	            break;
+	        default:
+	            break;
+	    }
+	}
+
+	*SOV_alert = alert;
+	*SOV_error = error;
+}
+void SUV_protect
+(
+				//input
+                const uint16_t *CellVoltage, 
+                const uint8_t PF_en,
+                const uint8_t SUV_en,
+                const int16_t SUV_th,          
+                const uint16_t SUV_delay,      
+                //output
+                uint8_t *SUV_alert,             
+                uint8_t *SUV_error   
+)
+{
+	uint8_t alert,error;
+	if(!PF_en || !SUV_en)//二次保护不使能，或SOV保护不使能
+	{
+		alert = 0;
+		error = 0;
+	}
+	else
+	{
+	    switch (SUV_State)
+	    {
+	        case NORMAL:   	     
+	            alert = 0;
+	            error = 0;
+	            if(CUV_Comp(CellVoltage,SUV_th))
+	            {
+	                SUV_counter ++;
+	                SUV_State = ALERT;
+					printf("\nAlert: SUV\n");
+	            }
+	            break;
+	        case ALERT:
+	            alert = 1;
+				error = 0;
+	            if(SUV_counter == SUV_delay-1 && CUV_Comp(CellVoltage,SUV_th))
+	            {
+	                SUV_counter = 0;
+	                SUV_State = TRIP;
+					printf("\nError: SUV\n");
+	            }    
+	            else if (!CUV_Comp(CellVoltage,SUV_th))
+	            {
+	                SUV_counter = 0;
+	                SUV_State = NORMAL;
+	            }
+	            else
+	                SUV_counter ++;
+	            break;
+	        case TRIP:
+	            alert = 0;
+	            error = 1;
+	            break;
+	        default:
+	            break;
+	    }
+	}
+	
+	*SUV_alert = alert;
+	*SUV_error = error;
+}
+

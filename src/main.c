@@ -73,6 +73,7 @@ int main()
 	int16_t  current;                               //电流结果输入
 	int16_t TS1,TS2,TS3;
 	uint8_t CHG_ON,DSG_ON,PCHG_ON,PDSG_ON;
+	uint8_t FUSE;
     FILE *fp;
     //fp = fopen("../sim/COV_COVL_TEST.txt","r");    //testcase自定义Vcell
     //fp = fopen("../sim/CUV_TEST.txt","r");
@@ -99,12 +100,13 @@ int main()
 		printf("\n#%d\n",cycle_counter);
 		
         BQ76952_Vcell(fp,&CellVoltage,&current,&charger,&LD,&TS1,&TS2,&TS3);  //Supply to VC1-VC16
-        BQ76952(&CellVoltage,current,charger,LD,TS1,TS2,TS3,&CHG_ON,&DSG_ON,&PCHG_ON,&PDSG_ON);//DUT_BQ76952
+        BQ76952(&CellVoltage,current,charger,LD,TS1,TS2,TS3,&CHG_ON,&DSG_ON,&PCHG_ON,&PDSG_ON,&FUSE);//DUT_BQ76952
 
 		printf("\nCHG_ON = %d\n",CHG_ON);
 		printf("DSG_ON = %d\n",DSG_ON);
 		printf("PCHG_ON = %d\n",PCHG_ON);
 		printf("PDSG_ON = %d\n",PDSG_ON);
+		printf("FUSE = %d\n",FUSE);
     }
 //等待外部输入命令序列使用示例
 //	while(1)
@@ -209,7 +211,21 @@ void update_config
 				uint16_t *PTO_DLY,
 				int16_t *PTO_Charge_TH,
 				int16_t *PTO_RESET,
-				int16_t *DSG_Current_TH	
+				int16_t *DSG_Current_TH,
+				//二次保护
+				uint8_t *PF_EN,
+				uint8_t *PF_FETS,
+				uint8_t *PF_FUSE,
+				uint8_t *PF_DPSLP,
+				uint8_t *PF_REGS,
+				//二次过压保护
+				uint8_t *SOV_EN,
+				int16_t *SOV_TH,
+				uint8_t *SOV_DLY,
+				//二次欠压保护
+				uint8_t *SUV_EN,
+				int16_t *SUV_TH,
+				uint8_t *SUV_DLY
 )
 {
 	*CUV_TH = 3000;         
@@ -302,6 +318,18 @@ void update_config
 	*UTINT_TH = -20;
 	*UTINT_DLY = 2;
 	*UTINT_REC_TH = -15;
+
+	*PF_EN = 1;
+	*PF_FETS = 0;
+	*PF_FUSE = 1;
+	*PF_DPSLP = 0;
+	*PF_REGS = 1;
+	*SOV_EN = 1;
+	*SOV_TH = 4500;
+	*SOV_DLY = 5;
+	*SUV_EN = 1;
+	*SUV_TH = 2200;
+	*SUV_DLY = 5;
 }
 void update_register
 (
@@ -352,7 +380,13 @@ void update_register
 				const uint8_t UTINT_error,
 			   	//预充电超时保护
 			   	const uint8_t PTOS_alert,
-			   	const uint8_t PTOS_error
+			   	const uint8_t PTOS_error,
+			   	//二次过压保护
+			   	const uint8_t SOV_alert,
+			   	const uint8_t SOV_error,
+			   	const uint8_t SUV_alert,
+			   	const uint8_t SUV_error,
+			   	const uint8_t FUSE
 )
 {
 	//电池电压
@@ -368,8 +402,13 @@ void update_register
 	uint8_t safetystatusB;
 	uint8_t safetyalertC;
 	uint8_t safetystatusC;
+	uint8_t pfalertA;
+	uint8_t pfstatusA;
 	uint8_t fetstatus;
+	uint8_t batterystatus;
 
+	uint8_t SS,PF,PCHG_MODE;
+	
 	safetyalertA = CUV_alert<<2 | COV_alert<<3 | OCC_alert<<4 | OCD1_alert<<5 | OCD2_alert<<6 | SCD_alert<<7;
 	writeDirectMemory(safetyalertA, SafetyAlertA);
 
@@ -388,10 +427,24 @@ void update_register
 	safetystatusC = PTOS_error<<3 | COVL_error<<4 | OCDL_error<<5 | SCDL_error<<6 | OCD3_error<<7;
 	writeDirectMemory(safetystatusC, SafetyStatusC);
 
+	pfalertA = SOV_alert << 1 | SUV_alert;
+	writeDirectMemory(pfalertA,PFAlertA);
+
+	pfstatusA = SOV_error << 1 | SUV_error;
+	writeDirectMemory(pfstatusA,PFStatusA);
+	
 	fetstatus = CHG_FET | PCHG_FET<<1 | DSG_FET<<2 | PDSG_FET<<3 ;
 	//	fetstatus = CHG_FET | PCHG_FET<<1 | DSG_FET<<2 | PDSG_FET<<3 | DCHG_PIN<<4 | DDSG_PIN<<5 | ALRT_PIN<<6;	
 	writeDirectMemory(fetstatus, FETStatus);
 
+	if(safetystatusA | safetystatusB | safetystatusC)
+		SS = 1;
+	if(pfstatusA)
+		PF = 1;
+	if(PCHG_FET)
+		PCHG_MODE = 1;
+	batterystatus = SS << 11 | PF << 10 | FUSE << 9 | PCHG_MODE << 1;
+	writeDirectMemory(batterystatus, BatteryStatus);
 }
 
 void BQ76952
@@ -410,7 +463,8 @@ void BQ76952
                 uint8_t *CHG_on,                
                 uint8_t *DSG_on,               
                 uint8_t *PCHG_on,               
-                uint8_t *PDSG_on              
+                uint8_t *PDSG_on,
+                uint8_t *FUSE
 //                uint8_t *Alert 
 )
 {
@@ -486,6 +540,19 @@ void BQ76952
 	int16_t PTO_Charge_TH;
 	int16_t PTO_RESET;
 	int16_t DSG_Current_TH;
+
+	uint8_t PF_EN;
+	uint8_t PF_FETS;
+	uint8_t PF_FUSE;
+	uint8_t PF_DPSLP;
+	uint8_t PF_REGS;
+	
+	uint8_t SOV_EN;
+	int16_t SOV_TH;
+	uint8_t SOV_DLY;
+	uint8_t SUV_EN;
+	int16_t SUV_TH;
+	uint8_t SUV_DLY;
 	
 	uint8_t FET_ctrl_en;
 	uint8_t FET_init_off;
@@ -544,6 +611,12 @@ void BQ76952
 	
 	uint8_t PTOS_alert;
 	uint8_t PTOS_error;
+
+	uint8_t SOV_alert;
+	uint8_t SOV_error;
+	uint8_t SUV_alert;
+	uint8_t SUV_error;
+	uint8_t fuse_ctrl;
 	
 	uint8_t CHG_ON;
 	uint8_t DSG_ON;
@@ -634,7 +707,21 @@ void BQ76952
 				&PTO_DLY,
 				&PTO_Charge_TH,
 				&PTO_RESET,
-				&DSG_Current_TH
+				&DSG_Current_TH,
+				//二次保护
+				&PF_EN,
+				&PF_FETS,
+				&PF_FUSE,
+				&PF_DPSLP,
+				&PF_REGS,
+				//二次过压保护
+				&SOV_EN,
+				&SOV_TH,
+				&SOV_DLY,
+				//二次欠压保护
+				&SUV_EN,
+				&SUV_TH,
+				&SUV_DLY
 				);
 	
     CUV_protect(
@@ -824,6 +911,30 @@ void BQ76952
 				&PTOS_alert,
 				&PTOS_error
 			   );
+
+	SOV_protect(
+				//input
+                CellVoltage, 
+                PF_EN,
+                SOV_EN,
+                SOV_TH,          
+                SOV_DLY,      
+                //output
+                &SOV_alert,             
+                &SOV_error   
+				);
+	SUV_protect(
+				//input
+                CellVoltage, 
+                PF_EN,
+                SUV_EN,
+                SUV_TH,          
+                SUV_DLY,      
+                //output
+                &SUV_alert,             
+                &SUV_error   
+				);
+	fuse_ctrl = PF_FUSE & (SOV_error | SUV_error);
 	
 	uint8_t LD_TOS_Delta = 10;	//用于PDSG基于电压关闭机制（阈值PDSG_StopDelta）
 	FET_auto_control(
@@ -917,12 +1028,19 @@ void BQ76952
 				UTINT_error,
 				//预充电超时保护
 				PTOS_alert,
-				PTOS_error
+				PTOS_error,
+				//二次欠压保护
+				SOV_alert,
+				SOV_error,
+				//二次欠压保护
+				SUV_alert,
+				SUV_error,
+				fuse_ctrl
 				);
 	
 	*CHG_on = CHG_ON;
 	*DSG_on = DSG_ON;
 	*PCHG_on = PCHG_ON;
 	*PDSG_on = PDSG_ON;
-	
+	*FUSE = fuse_ctrl;
 }
