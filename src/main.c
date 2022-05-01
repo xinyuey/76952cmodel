@@ -73,7 +73,8 @@ int main()
 	int16_t  current;                               //电流结果输入
 	int16_t TS1,TS2,TS3;
 	uint8_t CHG_ON,DSG_ON,PCHG_ON,PDSG_ON;
-	uint8_t FUSE;
+	uint8_t FUSE = 0;
+	uint8_t ALERT;
     FILE *fp;
     //fp = fopen("../sim/COV_COVL_TEST.txt","r");    //testcase自定义Vcell
     //fp = fopen("../sim/CUV_TEST.txt","r");
@@ -100,13 +101,14 @@ int main()
 		printf("\n#%d\n",cycle_counter);
 		
         BQ76952_Vcell(fp,&CellVoltage,&current,&charger,&LD,&TS1,&TS2,&TS3);  //Supply to VC1-VC16
-        BQ76952(&CellVoltage,current,charger,LD,TS1,TS2,TS3,&CHG_ON,&DSG_ON,&PCHG_ON,&PDSG_ON,&FUSE);//DUT_BQ76952
+        BQ76952(&CellVoltage,current,charger,LD,TS1,TS2,TS3,&CHG_ON,&DSG_ON,&PCHG_ON,&PDSG_ON,&FUSE,&ALERT);//DUT_BQ76952
 
 		printf("\nCHG_ON = %d\n",CHG_ON);
 		printf("DSG_ON = %d\n",DSG_ON);
 		printf("PCHG_ON = %d\n",PCHG_ON);
 		printf("PDSG_ON = %d\n",PDSG_ON);
 		printf("FUSE = %d\n",FUSE);
+		printf("ALERT = %d\n",ALERT);
     }
 //等待外部输入命令序列使用示例
 //	while(1)
@@ -168,7 +170,7 @@ void update_config
 				uint8_t *OCD1_DLY,                            
 				uint8_t *OCD2_TH,                          
 				uint8_t *OCD2_DLY,                          
-				uint8_t *OCD3_TH,                          
+				int16_t *OCD3_TH,                          
 				uint8_t *OCD3_DLY,                            
 				int16_t *OCD_REC_TH,                       
 				uint8_t *OCDL_Limit,                          
@@ -225,7 +227,15 @@ void update_config
 				//二次欠压保护
 				uint8_t *SUV_EN,
 				int16_t *SUV_TH,
-				uint8_t *SUV_DLY
+				uint8_t *SUV_DLY,
+				//二次保护器故障
+				uint8_t *LVL2_EN,
+				uint8_t *LVL2_DLY,
+				//警报源使能掩码
+			   	uint8_t *SF_ALERT_MASKA,
+			    uint8_t *SF_ALERT_MASKB,
+			   	uint8_t *SF_ALERT_MASKC,
+			   	uint8_t *PF_ALERT_MASKA
 )
 {
 	*CUV_TH = 3000;         
@@ -330,6 +340,13 @@ void update_config
 	*SUV_EN = 1;
 	*SUV_TH = 2200;
 	*SUV_DLY = 5;
+	*LVL2_EN = 1;
+	*LVL2_DLY = 5;
+
+   	*SF_ALERT_MASKA = 0xFC;
+   	*SF_ALERT_MASKB = 0xF7;
+   	*SF_ALERT_MASKC = 0xF4;
+   	*PF_ALERT_MASKA = 0x5F;
 }
 void update_register
 (
@@ -386,7 +403,16 @@ void update_register
 			   	const uint8_t SOV_error,
 			   	const uint8_t SUV_alert,
 			   	const uint8_t SUV_error,
-			   	const uint8_t FUSE
+			   	const uint8_t LVL2_alert,
+			   	const uint8_t LVL2_error,
+			   	const uint8_t FUSE,
+			   	//警报源使能掩码
+			   	const uint8_t SF_ALERT_MASKA,
+			   	const uint8_t SF_ALERT_MASKB,
+			   	const uint8_t SF_ALERT_MASKC,
+			   	const uint8_t PF_ALERT_MASKA,
+			   	//output
+			   	uint8_t *Alert_Latch
 )
 {
 	//电池电压
@@ -406,8 +432,12 @@ void update_register
 	uint8_t pfstatusA;
 	uint8_t fetstatus;
 	uint8_t batterystatus;
-
+	uint16_t alarmstatus;
+	uint16_t alarmrawstatus;
+	uint16_t alarmenable=0xFFFF;
+	
 	uint8_t SS,PF,PCHG_MODE;
+	uint8_t SSBC,SSA,MSK_SFALERT,MSK_PFALERT,XCHG,XDSG;
 	
 	safetyalertA = CUV_alert<<2 | COV_alert<<3 | OCC_alert<<4 | OCD1_alert<<5 | OCD2_alert<<6 | SCD_alert<<7;
 	writeDirectMemory(safetyalertA, SafetyAlertA);
@@ -427,10 +457,10 @@ void update_register
 	safetystatusC = PTOS_error<<3 | COVL_error<<4 | OCDL_error<<5 | SCDL_error<<6 | OCD3_error<<7;
 	writeDirectMemory(safetystatusC, SafetyStatusC);
 
-	pfalertA = SOV_alert << 1 | SUV_alert;
+	pfalertA = LVL2_alert << 2 | SOV_alert << 1 | SUV_alert;
 	writeDirectMemory(pfalertA,PFAlertA);
 
-	pfstatusA = SOV_error << 1 | SUV_error;
+	pfstatusA = LVL2_error << 2 | SOV_error << 1 | SUV_error;
 	writeDirectMemory(pfstatusA,PFStatusA);
 	
 	fetstatus = CHG_FET | PCHG_FET<<1 | DSG_FET<<2 | PDSG_FET<<3 ;
@@ -439,12 +469,53 @@ void update_register
 
 	if(safetystatusA | safetystatusB | safetystatusC)
 		SS = 1;
+	else
+		SS = 0;
 	if(pfstatusA)
 		PF = 1;
+	else
+		PF = 0;
 	if(PCHG_FET)
 		PCHG_MODE = 1;
+	else
+		PCHG_MODE = 0;
 	batterystatus = SS << 11 | PF << 10 | FUSE << 9 | PCHG_MODE << 1;
 	writeDirectMemory(batterystatus, BatteryStatus);
+
+	if(safetyalertB | safetyalertC)
+		SSBC = 1;
+	else
+		SSBC = 0;
+	if(safetyalertA)
+		SSA = 1;
+	else
+		SSA = 0;
+	if((safetyalertA & SF_ALERT_MASKA) | (safetyalertB & SF_ALERT_MASKB) | (safetyalertC & SF_ALERT_MASKC))
+		MSK_SFALERT = 1;
+	else
+		MSK_SFALERT = 0;
+	if(pfalertA & PF_ALERT_MASKA)
+		MSK_PFALERT = 1;
+	else
+		MSK_PFALERT = 0;
+	if(!CHG_FET)
+		XCHG = 1;
+	else
+		XCHG = 0;
+	if(!DSG_FET)
+		XDSG = 1;
+	else
+		XDSG = 0;
+	
+	alarmrawstatus = SSBC << 15 | SSA << 14 | PF << 13 | MSK_SFALERT << 12 | MSK_PFALERT << 11 | XCHG << 6 | XDSG << 5;
+	alarmstatus = alarmrawstatus & alarmenable;
+	writeDirectMemory(alarmrawstatus, AlarmRawStatus);
+	writeDirectMemory(alarmstatus, AlarmStatus);
+	
+	if(alarmstatus)
+		*Alert_Latch = 1;
+	else
+		*Alert_Latch = 0;
 }
 
 void BQ76952
@@ -456,7 +527,7 @@ void BQ76952
 				const uint16_t LD,
 				const int16_t TS1,             
                 const int16_t TS2,             
-                const int16_t TS3, 
+                const int16_t TS3,
 //                const uint8_t DCHG,           
 //                const uint8_t DDSG,          
 				//output
@@ -464,8 +535,8 @@ void BQ76952
                 uint8_t *DSG_on,               
                 uint8_t *PCHG_on,               
                 uint8_t *PDSG_on,
-                uint8_t *FUSE
-//                uint8_t *Alert 
+                uint8_t *FUSE,
+                uint8_t *Alert 
 )
 {
 	uint16_t CUV_TH;
@@ -493,7 +564,7 @@ void BQ76952
 	uint8_t OCD1_DLY;                            //实际延时 ms 级别
 	uint8_t OCD2_TH;                           //单位2mv
 	uint8_t OCD2_DLY ;                            //实际延时 ms 级别
-	uint8_t OCD3_TH;                          //基于CC1读数结果,单位userA(可配置)
+	int16_t OCD3_TH;                          //基于CC1读数结果,单位userA(可配置)
 	uint8_t OCD3_DLY;                            //实际延时 s 级别
 	int16_t OCD_REC_TH;                        //mV单位  原始寄存器单位为mA注意连接时单位
 
@@ -553,6 +624,8 @@ void BQ76952
 	uint8_t SUV_EN;
 	int16_t SUV_TH;
 	uint8_t SUV_DLY;
+	uint8_t LVL2_EN;
+	uint8_t LVL2_DLY;
 	
 	uint8_t FET_ctrl_en;
 	uint8_t FET_init_off;
@@ -570,6 +643,11 @@ void BQ76952
 	uint8_t PDSG_Timeout;
 	uint8_t PDSG_StopDelta;
 
+   	uint8_t SF_ALERT_MASKA;
+    uint8_t SF_ALERT_MASKB;
+   	uint8_t SF_ALERT_MASKC;
+   	uint8_t PF_ALERT_MASKA;
+	
     uint8_t CUV_alert;
     uint8_t CUV_error;
     uint8_t COV_alert;
@@ -616,7 +694,12 @@ void BQ76952
 	uint8_t SOV_error;
 	uint8_t SUV_alert;
 	uint8_t SUV_error;
+	uint8_t LVL2_alert;
+	uint8_t LVL2_error;
+	
 	uint8_t fuse_ctrl;
+	uint8_t fuse_in;
+	uint8_t alert_ctrl;
 	
 	uint8_t CHG_ON;
 	uint8_t DSG_ON;
@@ -721,7 +804,14 @@ void BQ76952
 				//二次欠压保护
 				&SUV_EN,
 				&SUV_TH,
-				&SUV_DLY
+				&SUV_DLY,
+				&LVL2_EN,
+				&LVL2_DLY,
+				//警报源使能掩码
+			    &SF_ALERT_MASKA,
+			   	&SF_ALERT_MASKB,
+			   	&SF_ALERT_MASKC,
+			   	&PF_ALERT_MASKA
 				);
 	
     CUV_protect(
@@ -902,7 +992,7 @@ void BQ76952
 				//input
 				CC1_current,		//PTO触发电流值、PTO恢复电荷值
 				current,			//PTO恢复时应处于放电状态
-				PCHG_on,
+				*PCHG_on,
 				PTO_DLY,
 				PTO_Charge_TH,		//PTO触发电流阈值
 				DSG_Current_TH,		//放电状态电流阈值
@@ -935,6 +1025,17 @@ void BQ76952
                 &SUV_error   
 				);
 	fuse_ctrl = PF_FUSE & (SOV_error | SUV_error);
+	fuse_in = (*FUSE) & (!fuse_ctrl);
+	LVL2_protect(
+				//input
+				fuse_in,
+				PF_EN,
+				LVL2_EN,
+				LVL2_DLY,
+				//output
+				&LVL2_alert,
+				&LVL2_error
+				);
 	
 	uint8_t LD_TOS_Delta = 10;	//用于PDSG基于电压关闭机制（阈值PDSG_StopDelta）
 	FET_auto_control(
@@ -1035,12 +1136,22 @@ void BQ76952
 				//二次欠压保护
 				SUV_alert,
 				SUV_error,
-				fuse_ctrl
+				LVL2_alert,
+				LVL2_error,
+				fuse_ctrl,
+				//警报源使能掩码
+			    SF_ALERT_MASKA,
+			   	SF_ALERT_MASKB,
+			   	SF_ALERT_MASKC,
+			   	PF_ALERT_MASKA,
+			   	//output
+			   	&alert_ctrl
 				);
 	
 	*CHG_on = CHG_ON;
 	*DSG_on = DSG_ON;
 	*PCHG_on = PCHG_ON;
 	*PDSG_on = PDSG_ON;
-	*FUSE = fuse_ctrl;
+	*FUSE = fuse_ctrl | fuse_in;
+	*Alert = alert_ctrl;
 }

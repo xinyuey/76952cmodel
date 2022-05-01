@@ -446,7 +446,7 @@ void OCD3_protect
 (
 				//input
 				const int16_t CC1_current,
-				const uint8_t OCD3_th,
+				const int16_t OCD3_th,
 				const uint8_t OCD3_delay,
 				const int16_t OCD_rec_th,
 				const uint8_t recoverytime,
@@ -463,7 +463,7 @@ void OCD3_protect
 //			clearFlags(OCD3_FAULT,SafetyStatusA);
 			alert = 0;
 			error = 0;
-            if (!OC_Comp(CC1_current,-(int16_t)OCD3_th))
+            if (!OC_Comp(CC1_current,OCD3_th))
             {
                 OCD3_counter++;
                 OCD3_State = ALERT;
@@ -476,7 +476,7 @@ void OCD3_protect
 //            setFlags(OCD3_ALERT, SafetyAlertA); // Safety Alert A[OCD3] = 1;
 			alert = 1;
 			error = 0;
-            if (OCD3_counter == OCD3_delay - 1 && !OC_Comp(CC1_current,-(int16_t)OCD3_th))
+            if (OCD3_counter == OCD3_delay - 1 && !OC_Comp(CC1_current,OCD3_th))
             {
                 OCD3_counter = 0;
                 OCD3_State = TRIP;
@@ -484,7 +484,7 @@ void OCD3_protect
                 if (OCDL_State != LATCH_TRIP) // OCDL触发后就不计数了
                     OCDL_counter++;           //放在这是为识别OCD_Fault上升沿，即OCD_Fault上升沿计数值达到锁存阈值，会触发OCDL
             }
-            else if (OC_Comp(CC1_current,-(int16_t)OCD3_th))
+            else if (OC_Comp(CC1_current,OCD3_th))
             {
                 OCD3_counter = 0;
                 OCD3_State = NORMAL;
@@ -497,14 +497,14 @@ void OCD3_protect
 //            setFlags(OCD3_FAULT, SafetyStatusA);  // Safety Status A[OCD3] = 1;
 			alert = 0;
 			error = 1;
-            if (OCD3_recounter == recoverytime - 1 && OC_Comp(CC1_current,-(int16_t)OCD_rec_th))
+            if (OCD3_recounter == recoverytime - 1 && OC_Comp(CC1_current,OCD_rec_th))
             {
                 OCD3_recounter = 0;
                 OCDL_DEC_counter = 0;
                 OCD3_State = NORMAL;
 				printf("\nRecovery: OCD3\n");
             }   
-            else if(OC_Comp(CC1_current,-(int16_t)OCD_rec_th))
+            else if(OC_Comp(CC1_current,OCD_rec_th))
             {
                 OCD3_recounter ++;
             }
