@@ -147,6 +147,9 @@ void update_config
 				uint8_t *PDSG_Timeout,
 				uint8_t *PDSG_StopDelta,
 				//电压保护
+				uint8_t *CUV_EN,
+				uint8_t *COV_EN,
+				uint8_t *COVL_EN,
 				uint16_t *CUV_TH,
 				uint16_t *COV_TH,
 				uint8_t *CUV_REC_HYS,
@@ -158,26 +161,33 @@ void update_config
 				uint8_t *COVL_DEC_DLY,
 				uint8_t *COVL_RecoveryTime,
 				//电流保护
+				uint8_t *SCD_EN,
 				uint8_t *SCD_TH,                 
 				uint8_t *SCD_DLY,
 				uint8_t *SCD_REC_DLY,
+				uint8_t *SCDL_EN,
 				uint8_t *SCDL_Limit,
 				uint8_t *SCDL_DEC_DLY,
 				uint8_t *SCDL_RecoveryTime,
 				int16_t *SCDL_REC_TH,
 				uint16_t *SCDL_CURR_RECOV,
+				uint8_t *OCD1_EN,
 				uint8_t *OCD1_TH,                           
-				uint8_t *OCD1_DLY,                            
+				uint8_t *OCD1_DLY, 
+				uint8_t *OCD2_EN,
 				uint8_t *OCD2_TH,                          
-				uint8_t *OCD2_DLY,                          
+				uint8_t *OCD2_DLY, 
+				uint8_t *OCD3_EN,
 				int16_t *OCD3_TH,                          
 				uint8_t *OCD3_DLY,                            
-				int16_t *OCD_REC_TH,                       
+				int16_t *OCD_REC_TH, 
+				uint8_t *OCDL_EN,
 				uint8_t *OCDL_Limit,                          
 				uint8_t *OCDL_DEC_DLY,                    
 				uint8_t *OCDL_RecoveryTime,                 
 				int16_t *OCDL_REC_TH,
 				uint16_t *OCDL_CURR_RECOV,
+				uint8_t *OCC_EN,
 				uint8_t *OCC_TH,
 				uint8_t *OCC_DLY,
 				int16_t *OCC_CREC_TH,
@@ -187,29 +197,37 @@ void update_config
 				uint8_t *TS2_Config,
 				uint8_t *TS3_Config,
 				uint8_t	*TINT_EN,							
-				uint8_t *TINT_FETT,	
+				uint8_t *TINT_FETT,
+				uint8_t *OTC_EN,
 				int8_t *OTC_TH,
 				uint8_t *OTC_DLY,
 				int8_t *OTC_REC_TH,
+				uint8_t *OTD_EN,
 				int8_t *OTD_TH,
 				uint8_t *OTD_DLY,
 				int8_t *OTD_REC_TH,
+				uint8_t *OTF_EN,
 				int8_t *OTF_TH,
 				uint8_t *OTF_DLY,
 				int8_t *OTF_REC_TH,
+				uint8_t *UTC_EN,
 				int8_t *UTC_TH,
 				uint8_t *UTC_DLY,
 				int8_t *UTC_REC_TH,
+				uint8_t *UTD_EN,
 				int8_t *UTD_TH,
 				uint8_t *UTD_DLY,
 				int8_t *UTD_REC_TH,
+				uint8_t *OTINT_EN,
 				int8_t *OTINT_TH,
 				uint8_t *OTINT_DLY,
 				int8_t *OTINT_REC_TH,
+				uint8_t *UTINT_EN,
 				int8_t *UTINT_TH,
 				uint8_t *UTINT_DLY,
 				int8_t *UTINT_REC_TH,
 				//预充电超时保护
+				uint8_t *PTO_EN,
 				uint16_t *PTO_DLY,
 				int16_t *PTO_Charge_TH,
 				int16_t *PTO_RESET,
@@ -238,6 +256,8 @@ void update_config
 			   	uint8_t *PF_ALERT_MASKA
 )
 {
+	*CUV_EN = 1;
+	*COV_EN = 1;
 	*CUV_TH = 3000;         
     *COV_TH = 5000; 
     *CUV_REC_HYS = 0;
@@ -246,6 +266,7 @@ void update_config
     *COV_DLY = 2; 
     *RecoveryTime = 3;      				  //保护的恢复延时
     
+    *COVL_EN = 1;
     *COVL_Limit = 4;        
     *COVL_DEC_DLY = 100; 
     *COVL_RecoveryTime = 150;
@@ -265,10 +286,12 @@ void update_config
 	*PDSG_Timeout = 5;
 	*PDSG_StopDelta = 50;
 
+	*SCD_EN = 1;
 	*SCD_TH = 100;                            //单位mv,原始寄存器为译码值
 	*SCD_DLY = 2;                             //实际延时很小 us 级别
 	*SCD_REC_DLY = 2;                         //实际 s 级别延时
-	
+
+	*SCDL_EN = 1;
 	*SCDL_Limit = 3;                          
 	*SCDL_DEC_DLY = 100;                      //实际 s 级别延时
 	*SCDL_RecoveryTime = 150;                 //实际 s 级别延时 Settings:Protection:Protection Configuration[SCDL_CURR_RECOV] 有效时该恢复机制才会起作用
@@ -277,25 +300,31 @@ void update_config
 	uint16_t Protection_Configuration = 0x0002;								//#define ProtectionConfiguration 0x925F 
 	*SCDL_CURR_RECOV = Protection_Configuration & (1<<10);                	//Protection_Configuration & (1<<10)    是否使能SCDL 基于电流恢复
 	*OCDL_CURR_RECOV = Protection_Configuration & (1<<9);                //Protection_Configuration & (1<<9)    是否使能OCDL 基于电流恢复
-	
+
+	*OCD1_EN = 1;
 	*OCD1_TH = 100;                           //单位2mv
 	*OCD1_DLY = 2;                            //实际延时 ms 级别
+	*OCD2_EN = 1;
 	*OCD2_TH = 200;                           //单位2mv
 	*OCD2_DLY = 2;                            //实际延时 ms 级别
+	*OCD3_EN = 1;
 	*OCD3_TH = -100;                          //基于CC1读数结果,单位userA(可配置)
 	*OCD3_DLY = 2;                            //实际延时 s 级别
 	*OCD_REC_TH = -10;                        //mV单位  原始寄存器单位为mA注意连接时单位
-	
+
+	*OCDL_EN = 1;
 	*OCDL_Limit = 3;                          
 	*OCDL_DEC_DLY = 100;                      //实际 s 级别延时
 	*OCDL_RecoveryTime = 150;                 //实际 s 级别延时 Settings:Protection:Protection Configuration[OCDL_CURR_RECOV] 有效时该恢复机制才会起作用
 	*OCDL_REC_TH = -10;                       //mV单位  原始寄存器单位为mA注意连接时单位
 
+	*OCC_EN = 1;
 	*OCC_TH = 4;                              //mV
 	*OCC_DLY = 2;                             //实际延时 ms 级别
 	*OCC_CREC_TH = 1;                         // mV单位  原始寄存器单位为mA注意连接时单位
 	*OCC_VREC_Delta = 200;                    // 10mV单位
 
+	*PTO_EN = 1;
 	*PTO_DLY = 1800;
 	*PTO_Charge_TH = 250;
 	*PTO_RESET = 2;
@@ -307,24 +336,31 @@ void update_config
 	*TS3_Config = 0x0F;
 	*TINT_EN = 0;							
 	*TINT_FETT = 0;	
+	*OTC_EN = 1;
 	*OTC_TH = 55;
 	*OTC_DLY = 2;
 	*OTC_REC_TH = 50;
+	*OTD_EN = 1;
 	*OTD_TH = 60;
 	*OTD_DLY = 2;
 	*OTD_REC_TH = 55; 
+	*OTF_EN = 1;
 	*OTF_TH = 80;
 	*OTF_DLY = 2;
 	*OTF_REC_TH = 65; 
+	*UTC_EN = 1;
 	*UTC_TH = 0;
 	*UTC_DLY = 2;
 	*UTC_REC_TH = 5; 
+	*UTD_EN = 1;
 	*UTD_TH = 0;
 	*UTD_DLY = 2;
 	*UTD_REC_TH = 5; 
+	*OTINT_EN = 1;
 	*OTINT_TH = 85;
 	*OTINT_DLY = 2;
 	*OTINT_REC_TH = 80;
+	*UTINT_EN = 1;
 	*UTINT_TH = -20;
 	*UTINT_DLY = 2;
 	*UTINT_REC_TH = -15;
@@ -539,41 +575,51 @@ void BQ76952
                 uint8_t *Alert 
 )
 {
+	uint8_t CUV_EN;
 	uint16_t CUV_TH;
 	uint16_t CUV_DLY;
 	uint8_t CUV_REC_HYS;
+	uint8_t COV_EN;
     uint16_t COV_TH; 
     uint16_t COV_DLY; 
-    uint8_t COV_REC_HYS;     
+    uint8_t COV_REC_HYS;
+	uint8_t COVL_EN;
     uint8_t COVL_Limit;        
     uint8_t COVL_DEC_DLY; 
     uint8_t COVL_RecoveryTime;
 	uint8_t RecoveryTime;
-	
+
+	uint8_t SCD_EN;
 	uint8_t SCD_TH;            
 	uint8_t SCD_DLY;           
 	uint8_t SCD_REC_DLY;       
-	
+
+	uint8_t SCDL_EN;
 	uint8_t SCDL_Limit;
 	uint8_t SCDL_DEC_DLY;
 	uint8_t SCDL_RecoveryTime;
 	int16_t SCDL_REC_TH;
 	uint16_t SCDL_CURR_RECOV;
-	
+
+	uint8_t OCD1_EN;
 	uint8_t OCD1_TH;                           //单位2mv
 	uint8_t OCD1_DLY;                            //实际延时 ms 级别
+	uint8_t OCD2_EN;
 	uint8_t OCD2_TH;                           //单位2mv
 	uint8_t OCD2_DLY ;                            //实际延时 ms 级别
+	uint8_t OCD3_EN;
 	int16_t OCD3_TH;                          //基于CC1读数结果,单位userA(可配置)
 	uint8_t OCD3_DLY;                            //实际延时 s 级别
 	int16_t OCD_REC_TH;                        //mV单位  原始寄存器单位为mA注意连接时单位
 
+	uint8_t OCDL_EN;
 	uint8_t OCDL_Limit;                          
 	uint8_t OCDL_DEC_DLY;                     //实际 s 级别延时
 	uint8_t OCDL_RecoveryTime;                 //实际 s 级别延时 Settings:Protection:Protection Configuration[OCDL_CURR_RECOV] 有效时该恢复机制才会起作用
 	int16_t OCDL_REC_TH;                       //mV单位  原始寄存器单位为mA注意连接时单位
 	uint16_t OCDL_CURR_RECOV;
 
+	uint8_t OCC_EN;
 	uint8_t OCC_TH;
 	uint8_t OCC_DLY;
 	int16_t OCC_CREC_TH;
@@ -583,30 +629,38 @@ void BQ76952
 	uint8_t TS2_Config;
 	uint8_t TS3_Config;
 	uint8_t	TINT_EN;							
-	uint8_t TINT_FETT;							
+	uint8_t TINT_FETT;
+	uint8_t OTC_EN;
 	int8_t OTC_TH;
 	uint8_t OTC_DLY;
 	int8_t OTC_REC_TH;
+	uint8_t OTD_EN;
 	int8_t OTD_TH;
 	uint8_t OTD_DLY;
 	int8_t OTD_REC_TH;
+	uint8_t OTF_EN;
 	int8_t OTF_TH;
 	uint8_t OTF_DLY;
 	int8_t OTF_REC_TH;
+	uint8_t UTC_EN;
 	int8_t UTC_TH;
 	uint8_t UTC_DLY;
 	int8_t UTC_REC_TH;
+	uint8_t UTD_EN;
 	int8_t UTD_TH;
 	uint8_t UTD_DLY;
 	int8_t UTD_REC_TH;
 
+	uint8_t OTINT_EN;
 	int8_t OTINT_TH;
 	uint8_t OTINT_DLY;
 	int8_t OTINT_REC_TH;
+	uint8_t UTINT_EN;
 	int8_t UTINT_TH;
 	uint8_t UTINT_DLY;
 	int8_t UTINT_REC_TH;
-	
+
+	uint8_t PTO_EN;
 	uint16_t PTO_DLY;
 	int16_t PTO_Charge_TH;
 	int16_t PTO_RESET;
@@ -724,6 +778,9 @@ void BQ76952
 				&PDSG_Timeout,
 				&PDSG_StopDelta,
 				//电压保护
+				&COV_EN,
+				&COV_EN,
+				&COVL_EN,
 				&CUV_TH,
 				&COV_TH,
 				&CUV_REC_HYS,
@@ -735,26 +792,33 @@ void BQ76952
 				&COVL_DEC_DLY,
 				&COVL_RecoveryTime,
 				//电流保护
+				&SCD_EN,
 				&SCD_TH,
 				&SCD_DLY,
 				&SCD_REC_DLY,
+				&SCDL_EN,
 				&SCDL_Limit,
 				&SCDL_DEC_DLY,
 				&SCDL_RecoveryTime,
 				&SCDL_REC_TH,
 				&SCDL_CURR_RECOV,
+				&OCD1_EN,
 				&OCD1_TH,                           
-				&OCD1_DLY,                            
+				&OCD1_DLY, 
+				&OCD2_EN,
 				&OCD2_TH,                           
-				&OCD2_DLY,                            
+				&OCD2_DLY, 
+				&OCD3_EN,
 				&OCD3_TH,                         
 				&OCD3_DLY,                            
-				&OCD_REC_TH,                        
+				&OCD_REC_TH, 
+				&OCDL_EN,
 				&OCDL_Limit,                         
 				&OCDL_DEC_DLY,                     
 				&OCDL_RecoveryTime,                 
 				&OCDL_REC_TH,
 				&OCDL_CURR_RECOV,
+				&OCC_EN,
 				&OCC_TH,
 				&OCC_DLY,
 				&OCC_CREC_TH,
@@ -764,29 +828,37 @@ void BQ76952
 				&TS2_Config,
 				&TS3_Config,
 				&TINT_EN,							
-				&TINT_FETT,	
+				&TINT_FETT,
+				&OTC_EN,
 				&OTC_TH,
 				&OTC_DLY,
 				&OTC_REC_TH,
+				&OTD_EN,
 				&OTD_TH,
 				&OTD_DLY,
 				&OTD_REC_TH,
+				&OTF_EN,
 				&OTF_TH,
 				&OTF_DLY,
 				&OTF_REC_TH,
+				&UTC_EN,
 				&UTC_TH,
 				&UTC_DLY,
 				&UTC_REC_TH,
+				&UTD_EN,
 				&UTD_TH,
 				&UTD_DLY,
 				&UTD_REC_TH,
+				&OTINT_EN,
 				&OTINT_TH,
 				&OTINT_DLY,
 				&OTINT_REC_TH,
+				&UTINT_EN,
 				&UTINT_TH,
 				&UTINT_DLY,
 				&UTINT_REC_TH,
 				//预充电超时保护
+				&PTO_EN,
 				&PTO_DLY,
 				&PTO_Charge_TH,
 				&PTO_RESET,
@@ -817,6 +889,7 @@ void BQ76952
     CUV_protect(
 				//input
 				CellVoltage,		//VC1-VC16
+				CUV_EN,
 				CUV_TH,				//阈值
 				CUV_DLY,			//延时
 				CUV_REC_HYS,			//恢复滞后电压
@@ -828,6 +901,7 @@ void BQ76952
     COV_protect(
 				//input
 				CellVoltage,		//VC1-VC16
+				COV_EN,
     			COV_TH,				//阈值
     			COV_DLY,			//延时
     			COV_REC_HYS,			//恢复滞后电压
@@ -838,6 +912,7 @@ void BQ76952
 
     COVL_protect(
 				//input
+				COVL_EN,
 				COVL_Limit,			//触发COVL错误的计数上限
     			COVL_DEC_DLY,		//COV错误计数递减的时间间隔
     			COVL_RecoveryTime,	//自动恢复延时
@@ -848,6 +923,7 @@ void BQ76952
 	SCD_protect(
 				//input
 				current,
+				SCD_EN,
 				SCD_TH,
 				SCD_DLY,
 				SCD_REC_DLY,
@@ -858,6 +934,7 @@ void BQ76952
 				//input
 				current,
 				LD,
+				SCDL_EN,
 				SCDL_Limit,
 				SCDL_DEC_DLY,
 				SCDL_RecoveryTime,
@@ -870,6 +947,7 @@ void BQ76952
 	OCD1_protect(
 				//input
 				current,
+				OCD1_EN,
 				OCD1_TH,
 				OCD1_DLY,
 				OCD_REC_TH,
@@ -881,6 +959,7 @@ void BQ76952
 	OCD2_protect(
 				//input
 				current,
+				OCD2_EN,
 				OCD2_TH,
 				OCD2_DLY,
 				OCD_REC_TH,
@@ -894,6 +973,7 @@ void BQ76952
 	OCD3_protect(
 				//input
 				CC1_current,
+				OCD3_EN,
 				OCD3_TH,
 				OCD3_DLY,
 				OCD_REC_TH,
@@ -906,6 +986,7 @@ void BQ76952
 				//input
 				current,
 				LD,
+				OCDL_EN,
 				OCDL_Limit,
 				OCDL_DEC_DLY,
 				OCDL_RecoveryTime,
@@ -920,6 +1001,7 @@ void BQ76952
 	OCC_protect(
 				//input
 				current,
+				OCC_EN,
 				OCC_TH,
 				OCC_DLY,
 				OCC_CREC_TH,
@@ -937,9 +1019,11 @@ void BQ76952
 				Internal_Temp,
 				TINT_EN,
 				TINT_FETT,
+				OTINT_EN,
 				OTINT_TH,
 				OTINT_DLY,
 				OTINT_REC_TH,
+				UTINT_EN,
 				UTINT_TH,
 				UTINT_DLY,
 				UTINT_REC_TH,
@@ -961,18 +1045,23 @@ void BQ76952
 				Internal_Temp,		//内部温度值
 				TINT_EN,			//内部温度作为电池温度使能位
 				TINT_FETT,			//内部温度作为FET温度使能位
+				OTC_EN,
 				OTC_TH,
 				OTC_DLY,
 				OTC_REC_TH,
+				OTD_EN,
 				OTD_TH,
 				OTD_DLY,
 				OTD_REC_TH,
+				OTF_EN,
 				OTF_TH,
 				OTF_DLY,
 				OTF_REC_TH,
+				UTC_EN,
 				UTC_TH,
 				UTC_DLY,
 				UTC_REC_TH,
+				UTD_EN,
 				UTD_TH,
 				UTD_DLY,
 				UTD_REC_TH,
@@ -993,6 +1082,7 @@ void BQ76952
 				CC1_current,		//PTO触发电流值、PTO恢复电荷值
 				current,			//PTO恢复时应处于放电状态
 				*PCHG_on,
+				PTO_EN,
 				PTO_DLY,
 				PTO_Charge_TH,		//PTO触发电流阈值
 				DSG_Current_TH,		//放电状态电流阈值

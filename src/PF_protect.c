@@ -41,6 +41,8 @@ void SOV_protect
 	{
 		alert = 0;
 		error = 0;
+		SOV_State = NORMAL;
+		SOV_counter = 0;
 	}
 	else
 	{
@@ -103,6 +105,8 @@ void SUV_protect
 	{
 		alert = 0;
 		error = 0;
+		SUV_State = NORMAL;
+		SUV_counter = 0;
 	}
 	else
 	{
@@ -165,6 +169,8 @@ void LVL2_protect
 	{
 		alert = 0;
 		error = 0;
+		LVL2_State = 0;
+		LVL2_counter = 0;
 	}
 	else
 	{

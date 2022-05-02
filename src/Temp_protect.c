@@ -61,6 +61,7 @@ void OTC_protect
 (
 				//input
 				const int16_t max_cell_temp,
+				const uint8_t OTC_en,
 				const int8_t OTC_th,
 				const uint8_t OTC_delay,
 				const int8_t OTC_rec_th,
@@ -71,53 +72,64 @@ void OTC_protect
 )
 {
 	uint8_t alert,error;
-    switch (OTC_State)
-    {
-        case NORMAL:   
-            alert = 0;
-            error = 0;
-            if(max_cell_temp > OTC_th)
-            {
-                OTC_counter ++;
-                OTC_State = ALERT;
-				printf("\nAlert: OTC\n");
-            }
-            break;
-        case ALERT:
-            alert = 1;
-			error = 0;
-            if(OTC_counter == OTC_delay-1 && (max_cell_temp > OTC_th))
-            {
-                OTC_counter = 0;
-                OTC_State = TRIP;
-				printf("\nError: OTC\n");
-            }    
-            else if (max_cell_temp <= OTC_th)
-            {
-                OTC_counter = 0;
-                OTC_State = NORMAL;
-            }
-            else
-                OTC_counter ++;
-            break;
-        case TRIP:
-            alert = 0;
-            error = 1;
-            if (OTC_recounter == recoverytime-1 && (max_cell_temp <= OTC_rec_th))
-            {
-                OTC_recounter = 0;
-                OTC_State = NORMAL;
-				printf("\nRecovery: OTC\n");
-            }   
-            else if(max_cell_temp <= OTC_rec_th)
-            {
-                OTC_recounter ++;
-            }
-            break;
-        default:
-            break;
-    }
-	
+	if(!OTC_en)
+	{
+		alert = 0;
+		error = 0;
+		OTC_State = NORMAL;
+		OTC_counter = 0;
+		OTC_recounter = 0;
+	}
+	else
+	{
+		switch (OTC_State)
+	    {
+	        case NORMAL:   
+	            alert = 0;
+	            error = 0;
+	            if(max_cell_temp > OTC_th)
+	            {
+	                OTC_counter ++;
+	                OTC_State = ALERT;
+					printf("\nAlert: OTC\n");
+	            }
+	            break;
+	        case ALERT:
+	            alert = 1;
+				error = 0;
+	            if(OTC_counter == OTC_delay-1 && (max_cell_temp > OTC_th))
+	            {
+	                OTC_counter = 0;
+	                OTC_State = TRIP;
+					printf("\nError: OTC\n");
+	            }    
+	            else if (max_cell_temp <= OTC_th)
+	            {
+	                OTC_counter = 0;
+	                OTC_State = NORMAL;
+	            }
+	            else
+	                OTC_counter ++;
+	            break;
+	        case TRIP:
+	            alert = 0;
+	            error = 1;
+	            if (OTC_recounter == recoverytime-1 && (max_cell_temp <= OTC_rec_th))
+	            {
+	                OTC_recounter = 0;
+	                OTC_State = NORMAL;
+					printf("\nRecovery: OTC\n");
+	            }   
+	            else if(max_cell_temp <= OTC_rec_th)
+	            {
+	                OTC_recounter ++;
+	            }
+	            break;
+	        default:
+	            break;
+	    }
+	}
+    
     *OTC_alert = alert;
     *OTC_error = error;
 }
@@ -125,6 +137,7 @@ void OTD_protect
 (
 				//input
 				const int16_t max_cell_temp,
+				const uint8_t OTD_en,
 				const int8_t OTD_th,
 				const uint8_t OTD_delay,
 				const int8_t OTD_rec_th,
@@ -135,52 +148,63 @@ void OTD_protect
 )
 {
 	uint8_t alert,error;
-    switch (OTD_State)
-    {
-        case NORMAL:   
-            alert = 0;
-            error = 0;
-            if(max_cell_temp > OTD_th)
-            {
-                OTD_counter ++;
-                OTD_State = ALERT;
-				printf("\nAlert: OTD\n");
-            }
-            break;
-        case ALERT:
-            alert = 1;
-			error = 0;
-            if(OTD_counter == OTD_delay-1 && (max_cell_temp > OTD_th))
-            {
-                OTD_counter = 0;
-                OTD_State = TRIP;
-				printf("\nError: OTD\n");
-            }    
-            else if (max_cell_temp <= OTD_th)
-            {
-                OTD_counter = 0;
-                OTD_State = NORMAL;
-            }
-            else
-                OTD_counter ++;
-            break;
-        case TRIP:
-            alert = 0;
-            error = 1;
-            if (OTD_recounter == recoverytime-1 && (max_cell_temp <= OTD_rec_th))
-            {
-                OTD_recounter = 0;
-                OTD_State = NORMAL;
-				printf("\nRecovery: OTD\n");
-            }   
-            else if(max_cell_temp <= OTD_rec_th)
-            {
-                OTD_recounter ++;
-            }
-            break;
-        default:
-            break;
-    }
+	if(!OTD_en)
+	{
+		alert = 0;
+		error = 0;
+		OTD_State = NORMAL;
+		OTD_counter = 0;
+		OTD_recounter = 0;
+	}
+	else
+	{
+		switch (OTD_State)
+	    {
+	        case NORMAL:   
+	            alert = 0;
+	            error = 0;
+	            if(max_cell_temp > OTD_th)
+	            {
+	                OTD_counter ++;
+	                OTD_State = ALERT;
+					printf("\nAlert: OTD\n");
+	            }
+	            break;
+	        case ALERT:
+	            alert = 1;
+				error = 0;
+	            if(OTD_counter == OTD_delay-1 && (max_cell_temp > OTD_th))
+	            {
+	                OTD_counter = 0;
+	                OTD_State = TRIP;
+					printf("\nError: OTD\n");
+	            }    
+	            else if (max_cell_temp <= OTD_th)
+	            {
+	                OTD_counter = 0;
+	                OTD_State = NORMAL;
+	            }
+	            else
+	                OTD_counter ++;
+	            break;
+	        case TRIP:
+	            alert = 0;
+	            error = 1;
+	            if (OTD_recounter == recoverytime-1 && (max_cell_temp <= OTD_rec_th))
+	            {
+	                OTD_recounter = 0;
+	                OTD_State = NORMAL;
+					printf("\nRecovery: OTD\n");
+	            }   
+	            else if(max_cell_temp <= OTD_rec_th)
+	            {
+	                OTD_recounter ++;
+	            }
+	            break;
+	        default:
+	            break;
+	    }
+	}
 	
     *OTD_alert = alert;
     *OTD_error = error;
@@ -189,6 +213,7 @@ void OTF_protect
 (
 				//input
 				const int16_t max_fet_temp,
+				const uint8_t OTF_en,
 				const int8_t OTF_th,
 				const uint8_t OTF_delay,
 				const int8_t OTF_rec_th,
@@ -199,52 +224,63 @@ void OTF_protect
 )
 {
 	uint8_t alert,error;
-    switch (OTF_State)
-    {
-        case NORMAL:   
-            alert = 0;
-            error = 0;
-            if(max_fet_temp > OTF_th)
-            {
-                OTF_counter ++;
-                OTF_State = ALERT;
-				printf("\nAlert: OTF\n");
-            }
-            break;
-        case ALERT:
-            alert = 1;
-			error = 0;
-            if(OTF_counter == OTF_delay-1 && (max_fet_temp > OTF_th))
-            {
-                OTF_counter = 0;
-                OTF_State = TRIP;
-				printf("\nError: OTF\n");
-            }    
-            else if (max_fet_temp <= OTF_th)
-            {
-                OTF_counter = 0;
-                OTF_State = NORMAL;
-            }
-            else
-                OTF_counter ++;
-            break;
-        case TRIP:
-            alert = 0;
-            error = 1;
-            if (OTF_recounter == recoverytime-1 && (max_fet_temp <= OTF_rec_th))
-            {
-                OTF_recounter = 0;
-                OTF_State = NORMAL;
-				printf("\nRecovery: OTF\n");
-            }   
-            else if(max_fet_temp <= OTF_rec_th)
-            {
-                OTF_recounter ++;
-            }
-            break;
-        default:
-            break;
-    }
+	if(!OTF_en)
+	{
+		alert = 0;
+		error = 0;
+		OTF_State = NORMAL;
+		OTF_counter = 0;
+		OTF_recounter = 0;
+	}
+	else
+	{
+	    switch (OTF_State)
+	    {
+	        case NORMAL:   
+	            alert = 0;
+	            error = 0;
+	            if(max_fet_temp > OTF_th)
+	            {
+	                OTF_counter ++;
+	                OTF_State = ALERT;
+					printf("\nAlert: OTF\n");
+	            }
+	            break;
+	        case ALERT:
+	            alert = 1;
+				error = 0;
+	            if(OTF_counter == OTF_delay-1 && (max_fet_temp > OTF_th))
+	            {
+	                OTF_counter = 0;
+	                OTF_State = TRIP;
+					printf("\nError: OTF\n");
+	            }    
+	            else if (max_fet_temp <= OTF_th)
+	            {
+	                OTF_counter = 0;
+	                OTF_State = NORMAL;
+	            }
+	            else
+	                OTF_counter ++;
+	            break;
+	        case TRIP:
+	            alert = 0;
+	            error = 1;
+	            if (OTF_recounter == recoverytime-1 && (max_fet_temp <= OTF_rec_th))
+	            {
+	                OTF_recounter = 0;
+	                OTF_State = NORMAL;
+					printf("\nRecovery: OTF\n");
+	            }   
+	            else if(max_fet_temp <= OTF_rec_th)
+	            {
+	                OTF_recounter ++;
+	            }
+	            break;
+	        default:
+	            break;
+	    }
+	}
 	
     *OTF_alert = alert;
     *OTF_error = error;
@@ -253,6 +289,7 @@ void UTC_protect
 (
 				//input
 				const int16_t min_cell_temp,
+				const uint8_t UTC_en,
 				const int8_t UTC_th,
 				const uint8_t UTC_delay,
 				const int8_t UTC_rec_th,
@@ -263,52 +300,63 @@ void UTC_protect
 )
 {
 	uint8_t alert,error;
-    switch (UTC_State)
-    {
-        case NORMAL:   
-            alert = 0;
-            error = 0;
-            if(min_cell_temp < UTC_th)
-            {
-                UTC_counter ++;
-                UTC_State = ALERT;
-				printf("\nAlert: UTC\n");
-            }
-            break;
-        case ALERT:
-            alert = 1;
-			error = 0;
-            if(UTC_counter == UTC_delay-1 && (min_cell_temp < UTC_th))
-            {
-                UTC_counter = 0;
-                UTC_State = TRIP;
-				printf("\nError: UTC\n");
-            }    
-            else if (min_cell_temp >= UTC_th)
-            {
-                UTC_counter = 0;
-                UTC_State = NORMAL;
-            }
-            else
-                UTC_counter ++;
-            break;
-        case TRIP:
-            alert = 0;
-            error = 1;
-            if (UTC_recounter == recoverytime-1 && (min_cell_temp >= UTC_rec_th))
-            {
-                UTC_recounter = 0;
-                UTC_State = NORMAL;
-				printf("\nRecovery: UTC\n");
-            }   
-            else if(min_cell_temp >= UTC_rec_th)
-            {
-                UTC_recounter ++;
-            }
-            break;
-        default:
-            break;
-    }
+	if(!UTC_en)
+	{
+		alert = 0;
+		error = 0;
+		UTC_State = NORMAL;
+		UTC_counter = 0;
+		UTC_recounter = 0;
+	}
+	else
+	{
+	    switch (UTC_State)
+	    {
+	        case NORMAL:   
+	            alert = 0;
+	            error = 0;
+	            if(min_cell_temp < UTC_th)
+	            {
+	                UTC_counter ++;
+	                UTC_State = ALERT;
+					printf("\nAlert: UTC\n");
+	            }
+	            break;
+	        case ALERT:
+	            alert = 1;
+				error = 0;
+	            if(UTC_counter == UTC_delay-1 && (min_cell_temp < UTC_th))
+	            {
+	                UTC_counter = 0;
+	                UTC_State = TRIP;
+					printf("\nError: UTC\n");
+	            }    
+	            else if (min_cell_temp >= UTC_th)
+	            {
+	                UTC_counter = 0;
+	                UTC_State = NORMAL;
+	            }
+	            else
+	                UTC_counter ++;
+	            break;
+	        case TRIP:
+	            alert = 0;
+	            error = 1;
+	            if (UTC_recounter == recoverytime-1 && (min_cell_temp >= UTC_rec_th))
+	            {
+	                UTC_recounter = 0;
+	                UTC_State = NORMAL;
+					printf("\nRecovery: UTC\n");
+	            }   
+	            else if(min_cell_temp >= UTC_rec_th)
+	            {
+	                UTC_recounter ++;
+	            }
+	            break;
+	        default:
+	            break;
+	    }
+	}
 	
     *UTC_alert = alert;
     *UTC_error = error;
@@ -317,6 +365,7 @@ void UTD_protect
 (
 				//input
 				const int16_t min_cell_temp,
+				const uint8_t UTD_en,
 				const int8_t UTD_th,
 				const uint8_t UTD_delay,
 				const int8_t UTD_rec_th,
@@ -327,52 +376,63 @@ void UTD_protect
 )
 {
 	uint8_t alert,error;
-    switch (UTD_State)
-    {
-        case NORMAL:   
-            alert = 0;
-            error = 0;
-            if(min_cell_temp < UTD_th)
-            {
-                UTD_counter ++;
-                UTD_State = ALERT;
-				printf("\nAlert: UTD\n");
-            }
-            break;
-        case ALERT:
-            alert = 1;
-			error = 0;
-            if(UTD_counter == UTD_delay-1 && (min_cell_temp < UTD_th))
-            {
-                UTD_counter = 0;
-                UTD_State = TRIP;
-				printf("\nError: UTD\n");
-            }    
-            else if (min_cell_temp >= UTD_th)
-            {
-                UTD_counter = 0;
-                UTD_State = NORMAL;
-            }
-            else
-                UTD_counter ++;
-            break;
-        case TRIP:
-            alert = 0;
-            error = 1;
-            if (UTD_recounter == recoverytime-1 && (min_cell_temp >= UTD_rec_th))
-            {
-                UTD_recounter = 0;
-                UTD_State = NORMAL;
-				printf("\nRecovery: UTD\n");
-            }   
-            else if(min_cell_temp >= UTD_rec_th)
-            {
-                UTD_recounter ++;
-            }
-            break;
-        default:
-            break;
-    }
+	if(!UTD_en)
+	{
+		alert = 0;
+		error = 0;
+		UTD_State = NORMAL;
+		UTD_counter = 0;
+		UTD_recounter = 0;
+	}
+	else
+	{
+	    switch (UTD_State)
+	    {
+	        case NORMAL:   
+	            alert = 0;
+	            error = 0;
+	            if(min_cell_temp < UTD_th)
+	            {
+	                UTD_counter ++;
+	                UTD_State = ALERT;
+					printf("\nAlert: UTD\n");
+	            }
+	            break;
+	        case ALERT:
+	            alert = 1;
+				error = 0;
+	            if(UTD_counter == UTD_delay-1 && (min_cell_temp < UTD_th))
+	            {
+	                UTD_counter = 0;
+	                UTD_State = TRIP;
+					printf("\nError: UTD\n");
+	            }    
+	            else if (min_cell_temp >= UTD_th)
+	            {
+	                UTD_counter = 0;
+	                UTD_State = NORMAL;
+	            }
+	            else
+	                UTD_counter ++;
+	            break;
+	        case TRIP:
+	            alert = 0;
+	            error = 1;
+	            if (UTD_recounter == recoverytime-1 && (min_cell_temp >= UTD_rec_th))
+	            {
+	                UTD_recounter = 0;
+	                UTD_State = NORMAL;
+					printf("\nRecovery: UTD\n");
+	            }   
+	            else if(min_cell_temp >= UTD_rec_th)
+	            {
+	                UTD_recounter ++;
+	            }
+	            break;
+	        default:
+	            break;
+	    }
+	}
 	
     *UTD_alert = alert;
     *UTD_error = error;
@@ -381,6 +441,7 @@ void OTINT_protect
 (
 				//input
 				const int16_t Internal_Temp,
+				const uint8_t OTINT_en,
 				const int8_t OTINT_th,
 				const uint8_t OTINT_delay,
 				const int8_t OTINT_rec_th,
@@ -391,52 +452,63 @@ void OTINT_protect
 )
 {
 	uint8_t alert,error;
-    switch (OTINT_State)
-    {
-        case NORMAL:   
-            alert = 0;
-            error = 0;
-            if(Internal_Temp > OTINT_th)
-            {
-                OTINT_counter ++;
-                OTINT_State = ALERT;
-				printf("\nAlert:  OTINT\n");
-            }
-            break;
-        case ALERT:
-            alert = 1;
-			error = 0;
-            if(OTINT_counter == OTINT_delay-1 && (Internal_Temp > OTINT_th))
-            {
-                OTINT_counter = 0;
-                OTINT_State = TRIP;
-				printf("\nError:  OTINT\n");
-            }    
-            else if (Internal_Temp <= OTINT_th)
-            {
-                OTINT_counter = 0;
-                OTINT_State = NORMAL;
-            }
-            else
-                OTINT_counter ++;
-            break;
-        case TRIP:
-            alert = 0;
-            error = 1;
-            if (OTINT_recounter == recoverytime-1 && (Internal_Temp <= OTINT_rec_th))
-            {
-                OTINT_recounter = 0;
-                OTINT_State = NORMAL;
-				printf("\nRecovery:  OTINT\n");
-            }   
-            else if(Internal_Temp <= OTINT_rec_th)
-            {
-                OTINT_recounter ++;
-            }
-            break;
-        default:
-            break;
-    }
+	if(!OTINT_en)
+	{
+		alert = 0;
+		error = 0;
+		OTINT_State = NORMAL;
+		OTINT_counter = 0;
+		OTINT_recounter = 0;
+	}
+	else
+	{
+	    switch (OTINT_State)
+	    {
+	        case NORMAL:   
+	            alert = 0;
+	            error = 0;
+	            if(Internal_Temp > OTINT_th)
+	            {
+	                OTINT_counter ++;
+	                OTINT_State = ALERT;
+					printf("\nAlert:  OTINT\n");
+	            }
+	            break;
+	        case ALERT:
+	            alert = 1;
+				error = 0;
+	            if(OTINT_counter == OTINT_delay-1 && (Internal_Temp > OTINT_th))
+	            {
+	                OTINT_counter = 0;
+	                OTINT_State = TRIP;
+					printf("\nError:  OTINT\n");
+	            }    
+	            else if (Internal_Temp <= OTINT_th)
+	            {
+	                OTINT_counter = 0;
+	                OTINT_State = NORMAL;
+	            }
+	            else
+	                OTINT_counter ++;
+	            break;
+	        case TRIP:
+	            alert = 0;
+	            error = 1;
+	            if (OTINT_recounter == recoverytime-1 && (Internal_Temp <= OTINT_rec_th))
+	            {
+	                OTINT_recounter = 0;
+	                OTINT_State = NORMAL;
+					printf("\nRecovery:  OTINT\n");
+	            }   
+	            else if(Internal_Temp <= OTINT_rec_th)
+	            {
+	                OTINT_recounter ++;
+	            }
+	            break;
+	        default:
+	            break;
+	    }
+	}
 	
     *OTINT_alert = alert;
     *OTINT_error = error;
@@ -445,6 +517,7 @@ void UTINT_protect
 (
 				//input
 				const int16_t Internal_Temp,
+				const uint8_t UTINT_en,
 				const int8_t UTINT_th,
 				const uint8_t UTINT_delay,
 				const int8_t UTINT_rec_th,
@@ -455,52 +528,63 @@ void UTINT_protect
 )
 {
 	uint8_t alert,error;
-    switch (UTINT_State)
-    {
-        case NORMAL:   
-            alert = 0;
-            error = 0;
-            if(Internal_Temp < UTINT_th)
-            {
-                UTINT_counter ++;
-                UTINT_State = ALERT;
-				printf("\nAlert:  UTINT\n");
-            }
-            break;
-        case ALERT:
-            alert = 1;
-			error = 0;
-            if(UTINT_counter == UTINT_delay-1 && (Internal_Temp < UTINT_th))
-            {
-                UTINT_counter = 0;
-                UTINT_State = TRIP;
-				printf("\nError:  UTINT\n");
-            }    
-            else if (Internal_Temp >= UTINT_th)
-            {
-                UTINT_counter = 0;
-                UTINT_State = NORMAL;
-            }
-            else
-                UTINT_counter ++;
-            break;
-        case TRIP:
-            alert = 0;
-            error = 1;
-            if (UTINT_recounter == recoverytime-1 && (Internal_Temp >= UTINT_rec_th))
-            {
-                UTINT_recounter = 0;
-                UTINT_State = NORMAL;
-				printf("\nRecovery:  UTINT\n");
-            }   
-            else if(Internal_Temp >= UTINT_rec_th)
-            {
-                UTINT_recounter ++;
-            }
-            break;
-        default:
-            break;
-    }
+	if(!UTINT_en)
+	{
+		alert = 0;
+		error = 0;
+		UTINT_State = NORMAL;
+		UTINT_counter = 0;
+		UTINT_recounter = 0;
+	}
+	else
+	{
+	    switch (UTINT_State)
+	    {
+	        case NORMAL:   
+	            alert = 0;
+	            error = 0;
+	            if(Internal_Temp < UTINT_th)
+	            {
+	                UTINT_counter ++;
+	                UTINT_State = ALERT;
+					printf("\nAlert:  UTINT\n");
+	            }
+	            break;
+	        case ALERT:
+	            alert = 1;
+				error = 0;
+	            if(UTINT_counter == UTINT_delay-1 && (Internal_Temp < UTINT_th))
+	            {
+	                UTINT_counter = 0;
+	                UTINT_State = TRIP;
+					printf("\nError:  UTINT\n");
+	            }    
+	            else if (Internal_Temp >= UTINT_th)
+	            {
+	                UTINT_counter = 0;
+	                UTINT_State = NORMAL;
+	            }
+	            else
+	                UTINT_counter ++;
+	            break;
+	        case TRIP:
+	            alert = 0;
+	            error = 1;
+	            if (UTINT_recounter == recoverytime-1 && (Internal_Temp >= UTINT_rec_th))
+	            {
+	                UTINT_recounter = 0;
+	                UTINT_State = NORMAL;
+					printf("\nRecovery:  UTINT\n");
+	            }   
+	            else if(Internal_Temp >= UTINT_rec_th)
+	            {
+	                UTINT_recounter ++;
+	            }
+	            break;
+	        default:
+	            break;
+	    }
+	}
 	
     *UTINT_alert = alert;
     *UTINT_error = error;
@@ -512,9 +596,11 @@ void InternT_protect
 				const int16_t Internal_Temp,
 				const uint8_t TINT_en,
 				const uint8_t TINT_fett,
+				const uint8_t OTINT_en,
 				const int8_t OTINT_th,
 				const uint8_t OTINT_delay,
 				const int8_t OTINT_rec_th,
+				const uint8_t UTINT_en,
 				const int8_t UTINT_th,
 				const uint8_t UTINT_delay,
 				const int8_t UTINT_rec_th,
@@ -535,6 +621,7 @@ void InternT_protect
 		OTINT_protect(
 					//input
 					Internal_Temp,
+					OTINT_en,
 					OTINT_th,
 					OTINT_delay,
 					OTINT_rec_th,
@@ -546,6 +633,7 @@ void InternT_protect
 		UTINT_protect(
 					//input
 					Internal_Temp,
+					UTINT_en,
 					UTINT_th,
 					UTINT_delay,
 					UTINT_rec_th,
@@ -574,18 +662,23 @@ void TermistorT_protect
 				const int16_t Internal_Temp,
 				const uint8_t TINT_en,
 				const uint8_t TINT_fett,
+				const uint8_t OTC_en,
 				const int8_t OTC_th,
 				const uint8_t OTC_delay,
 				const int8_t OTC_rec_th,
+				const uint8_t OTD_en,
 				const int8_t OTD_th,
 				const uint8_t OTD_delay,
 				const int8_t OTD_rec_th,
+				const uint8_t OTF_en,
 				const int8_t OTF_th,
 				const uint8_t OTF_delay,
 				const uint8_t OTF_rec_th,
+				const uint8_t UTC_en,
 				const int8_t UTC_th,
 				const uint8_t UTC_delay,
 				const int8_t UTC_rec_th,
+				const uint8_t UTD_en,
 				const int8_t UTD_th,
 				const uint8_t UTD_delay,
 				const int8_t UTD_rec_th,
@@ -737,6 +830,7 @@ void TermistorT_protect
 		OTC_protect(
 					//input
 					max_cell_temp,
+					OTC_en,
 					OTC_th,
 					OTC_delay,
 					OTC_rec_th,
@@ -748,6 +842,7 @@ void TermistorT_protect
 		OTD_protect(
 					//input
 					max_cell_temp,
+					OTD_en,
 					OTD_th,
 					OTD_delay,
 					OTD_rec_th,
@@ -759,6 +854,7 @@ void TermistorT_protect
 		UTC_protect(
 					//input
 					min_cell_temp,
+					UTC_en,
 					UTC_th,
 					UTC_delay,
 					UTC_rec_th,
@@ -770,6 +866,7 @@ void TermistorT_protect
 		UTD_protect(
 					//input
 					min_cell_temp,
+					UTD_en,
 					UTD_th,
 					UTD_delay,
 					UTD_rec_th,
@@ -785,6 +882,7 @@ void TermistorT_protect
 		OTF_protect(
 					//input
 					max_fet_temp,
+					OTF_en,
 					OTF_th,
 					OTF_delay,
 					OTF_rec_th,

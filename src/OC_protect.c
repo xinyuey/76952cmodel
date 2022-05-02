@@ -124,6 +124,7 @@ void SCD_protect
 (
 				//input
 				const int16_t current,
+				const uint8_t SCD_en,
 				const uint8_t SCD_th,
 				const uint8_t SCD_delay,
 				const uint8_t SCD_rec_delay,
@@ -133,67 +134,73 @@ void SCD_protect
 
 {
 	uint8_t alert,error;
-    switch (SCD_State)
-    {
-        case NORMAL:   
-//            clearFlags(SCD_ALERT,SafetyAlertA);
-//			clearFlags(SCD_FAULT,SafetyStatusA);
-			alert = 0;
-			error = 0;
-            if(!OC_Comp(current,-(int16_t)SCD_th))
-            {
-                SCD_counter ++;
-                SCD_State = ALERT;
-				printf("\nAlert: SCD\n");
-            }
-            else if(SCDL_counter > 0)
-                SCDL_DEC_counter ++;
-            break;
-        case ALERT:
-//            setFlags(SCD_ALERT,SafetyAlertA);	//Safety Alert A[SCD] = 1;
-			alert = 1;
-			error = 0;
-            if(SCD_counter == SCD_delay-1 && !OC_Comp(current,-(int16_t)SCD_th))
-            {
-                SCD_counter = 0;
-                SCD_State = TRIP;
-				printf("\nError: SCD\n");
-                if(SCDL_State != LATCH_TRIP)    //SCDL触发后就不计数了
-                    SCDL_counter ++;    //放在这是为识别SCD_Fault上升沿，即SCD_Fault上升沿计数值达到锁存阈值，会触发SCDL
-            }    
-            else if (OC_Comp(current,-(int16_t)SCD_th))
-            {
-                SCD_counter = 0;
-                SCD_State = NORMAL;
-            }
-            else
-                SCD_counter ++;
-            break;
-        case TRIP:
-//			clearFlags(SCD_ALERT,SafetyAlertA);		//Safety Alert A[SCD] = 0;
-//			setFlags(SCD_FAULT,SafetyStatusA);		//Safety Status A[SCD] = 1;
-			alert = 0;
-			error = 1;
-            if (SCD_recounter == SCD_rec_delay-1 && OC_Comp(current,-(int16_t)SCD_th))
-            {
-                SCD_recounter = 0;
-                SCDL_DEC_counter = 0;
-                SCD_State = NORMAL;
-				printf("\nRecovery: SCD\n");
-            }   
-            else if(OC_Comp(current,-(int16_t)SCD_th))
-            {
-                SCD_recounter ++;
-            }
-            else 
-            {
-                SCD_recounter = 0;
-            }
-            break;
-        default:
-            break;
-    } 
-
+	if(!SCD_en)
+	{
+		alert = 0;
+		error = 0;
+		SCD_State = NORMAL;
+		SCD_counter = 0;
+		SCD_recounter = 0;
+		SCDL_DEC_counter = 0;
+	}
+	else
+	{
+	    switch (SCD_State)
+	    {
+	        case NORMAL:   
+				alert = 0;
+				error = 0;
+	            if(!OC_Comp(current,-(int16_t)SCD_th))
+	            {
+	                SCD_counter ++;
+	                SCD_State = ALERT;
+					printf("\nAlert: SCD\n");
+	            }
+	            else if(SCDL_counter > 0)
+	                SCDL_DEC_counter ++;
+	            break;
+	        case ALERT:
+				alert = 1;
+				error = 0;
+	            if(SCD_counter == SCD_delay-1 && !OC_Comp(current,-(int16_t)SCD_th))
+	            {
+	                SCD_counter = 0;
+	                SCD_State = TRIP;
+					printf("\nError: SCD\n");
+	                if(SCDL_State != LATCH_TRIP)    //SCDL触发后就不计数了
+	                    SCDL_counter ++;    //放在这是为识别SCD_Fault上升沿，即SCD_Fault上升沿计数值达到锁存阈值，会触发SCDL
+	            }    
+	            else if (OC_Comp(current,-(int16_t)SCD_th))
+	            {
+	                SCD_counter = 0;
+	                SCD_State = NORMAL;
+	            }
+	            else
+	                SCD_counter ++;
+	            break;
+	        case TRIP:
+				alert = 0;
+				error = 1;
+	            if (SCD_recounter == SCD_rec_delay-1 && OC_Comp(current,-(int16_t)SCD_th))
+	            {
+	                SCD_recounter = 0;
+	                SCDL_DEC_counter = 0;
+	                SCD_State = NORMAL;
+					printf("\nRecovery: SCD\n");
+	            }   
+	            else if(OC_Comp(current,-(int16_t)SCD_th))
+	            {
+	                SCD_recounter ++;
+	            }
+	            else 
+	            {
+	                SCD_recounter = 0;
+	            }
+	            break;
+	        default:
+	            break;
+	    } 
+	}
 	*SCD_alert = alert;
 	*SCD_error = error;
 }
@@ -203,6 +210,7 @@ void SCDL_protect
 				//input
 				const int16_t current,
 				const uint16_t LD,
+				const uint8_t SCDL_en,
 				const uint8_t SCDL_limit,
 				const uint8_t SCDL_dec_delay,
 				const uint8_t SCDL_recoverytime,
@@ -216,70 +224,76 @@ void SCDL_protect
 //    SCDL_CURR_RECOV = Protection_Configuration & (1<<10);
 //    OCDL_CURR_RECOV = Protection_Configuration & (1<<9); 
 	uint8_t alert,error;
-    switch (SCDL_State)
-    {
-        case LATCH_RESET:   
-//          clearFlags(SCDL_ALERT,SafetyAlertC);		//Safety Alert C[SCDL] = 0;
-//			clearFlags(SCDL_FAULT,SafetyStatusC);		//Safety Status C[SCDL] = 0;
+	if(!SCDL_en)
+	{
 			alert = 0;
 			error = 0;
-            if(SCDL_counter > 0)
-            {
-				SCDL_State = LATCH_ALERT;
-				printf("\nAlert: SCD Latch\n");
-			}
-            break;
-        case LATCH_ALERT:
-//            setFlags(SCDL_ALERT,SafetyAlertC);			//Safety Alert C[SCDL] = 1;
-            alert = 1;
-			error = 0;
-            if(SCDL_counter == SCDL_limit)
-            {
-                SCDL_counter = 0;
-                SCDL_State = LATCH_TRIP;
-				printf("\nError: SCD Latch\n");
-            }
-            else if(SCDL_counter == 0)
-            {
-                SCDL_State = LATCH_RESET;
-            }
-            else if(SCDL_DEC_counter >= SCDL_dec_delay) 
-            {   
-                SCDL_counter --;
-            }
-            break;
-        case LATCH_TRIP:
-//            clearFlags(SCDL_ALERT,SafetyAlertC);		//Safety Alert  C[SCDL] = 0;
-//			setFlags(SCDL_FAULT,SafetyStatusC);			//Safety Status C[SCDL] = 1;
-			alert = 0;
-			error = 1;
-            if(!LD)
-            {
-                SCDL_recounter = 0;
-                SCDL_State = LATCH_RESET;
-				printf("\nRecovery: SCD Latch from LD detect\n");
-            }
-            else if(SCDL_curr_reccov && (SCDL_recounter == SCDL_recoverytime-1) && OC_Comp(current,(int16_t)SCDL_rec_th))
-            {
-                SCDL_recounter = 0;
-                SCDL_State = LATCH_RESET;
-				printf("\nRecovery: SCD Latch from Current\n");
-            } 
-            //else if (基于主机子命令恢复)
+			SCDL_State = LATCH_RESET;
+			SCDL_counter = 0;
+			SCDL_recounter = 0;
+	}
+	else
+	{
+	    switch (SCDL_State)
+	    {
+	        case LATCH_RESET:   
+				alert = 0;
+				error = 0;
+	            if(SCDL_counter > 0)
+	            {
+					SCDL_State = LATCH_ALERT;
+					printf("\nAlert: SCD Latch\n");
+				}
+	            break;
+	        case LATCH_ALERT:
+	            alert = 1;
+				error = 0;
+	            if(SCDL_counter == SCDL_limit)
+	            {
+	                SCDL_counter = 0;
+	                SCDL_State = LATCH_TRIP;
+					printf("\nError: SCD Latch\n");
+	            }
+	            else if(SCDL_counter == 0)
+	            {
+	                SCDL_State = LATCH_RESET;
+	            }
+	            else if(SCDL_DEC_counter >= SCDL_dec_delay) 
+	            {   
+	                SCDL_counter --;
+	            }
+	            break;
+	        case LATCH_TRIP:
+				alert = 0;
+				error = 1;
+	            if(!LD)
+	            {
+	                SCDL_recounter = 0;
+	                SCDL_State = LATCH_RESET;
+					printf("\nRecovery: SCD Latch from LD detect\n");
+	            }
+	            else if(SCDL_curr_reccov && (SCDL_recounter == SCDL_recoverytime-1) && OC_Comp(current,(int16_t)SCDL_rec_th))
+	            {
+	                SCDL_recounter = 0;
+	                SCDL_State = LATCH_RESET;
+					printf("\nRecovery: SCD Latch from Current\n");
+	            } 
+	            //else if (基于主机子命令恢复)
 
-            else if(SCDL_curr_reccov && OC_Comp(current,(int16_t)SCDL_rec_th))
-            {
-                SCDL_recounter ++;
-            }  
-            else
-            {
-                SCDL_recounter = 0;
-            }
-            break;
-        default:
-            break;
-    }
-
+	            else if(SCDL_curr_reccov && OC_Comp(current,(int16_t)SCDL_rec_th))
+	            {
+	                SCDL_recounter ++;
+	            }  
+	            else
+	            {
+	                SCDL_recounter = 0;
+	            }
+	            break;
+	        default:
+	            break;
+	    }
+	}
+	
 	*SCDL_alert = alert;
 	*SCDL_error = error;
 }
@@ -288,6 +302,7 @@ void OCD1_protect
 (
 				//input
 				const int16_t current,
+				const uint8_t OCD1_en,
 				const uint8_t OCD1_th,
 				const uint8_t OCD1_delay,
 				const int16_t OCD_rec_th,
@@ -298,67 +313,73 @@ void OCD1_protect
 )
 {
 	uint8_t alert,error;
-    switch (OCD1_State)
-    {
-        case NORMAL:   
-//            clearFlags(OCD1_ALERT,SafetyAlertA);
-//			clearFlags(OCD1_FAULT,SafetyStatusA);
+	if(!OCD1_en)
+	{
 			alert = 0;
 			error = 0;
-            if (!OC_Comp(current,-(int16_t)OCD1_th))
-            {
-                OCD1_counter++;
-                OCD1_State = ALERT;
-                printf("\nAlert: OCD1\n");
-            }
-            else if(OCDL_counter > 0)
-                OCDL_DEC_counter ++;
-            break;
-        case ALERT:
-//            setFlags(OCD1_ALERT, SafetyAlertA); // Safety Alert A[OCD1] = 1;
-			alert = 1;
-			error = 0;
-            if (OCD1_counter == OCD1_delay - 1 && !OC_Comp(current,-(int16_t)OCD1_th))
-            {
-                OCD1_counter = 0;
-                OCD1_State = TRIP;
-                printf("\nError: OCD1\n");
-                if (OCDL_State != LATCH_TRIP) // OCDL触发后就不计数了
-                    OCDL_counter++;           //放在这是为识别OCD_Fault上升沿，即OCD_Fault上升沿计数值达到锁存阈值，会触发OCDL
-            }
-            else if (OC_Comp(current,-(int16_t)OCD1_th))
-            {
-                OCD1_counter = 0;
-                OCD1_State = NORMAL;
-            }
-            else
-                OCD1_counter++;
-            break;
-        case TRIP:
-//            clearFlags(OCD1_ALERT, SafetyAlertA); // Safety Alert A[OCD1] = 0;
-//            setFlags(OCD1_FAULT, SafetyStatusA);  // Safety Status A[OCD1] = 1;
-			alert = 0;
-			error = 1;
-            if (OCD1_recounter == recoverytime - 1 && OC_Comp(current,-(int16_t)OCD_rec_th))
-            {
-                OCD1_recounter = 0;
-                OCDL_DEC_counter = 0;
-                OCD1_State = NORMAL;
-				printf("\nRecovery: OCD1\n");
-            }   
-            else if(OC_Comp(current,-(int16_t)OCD_rec_th))
-            {
-                OCD1_recounter ++;
-            }
-            else
-            {
-                OCD1_recounter = 0;
-            }
-            break;
-        default:
-            break;
-    }
-
+			OCD1_State = NORMAL;
+			OCD1_counter = 0;
+			OCD1_recounter = 0;
+	}
+	else
+	{
+	    switch (OCD1_State)
+	    {
+	        case NORMAL:
+				alert = 0;
+				error = 0;
+	            if (!OC_Comp(current,-(int16_t)OCD1_th))
+	            {
+	                OCD1_counter++;
+	                OCD1_State = ALERT;
+	                printf("\nAlert: OCD1\n");
+	            }
+	            else if(OCDL_counter > 0)
+	                OCDL_DEC_counter ++;
+	            break;
+	        case ALERT:
+				alert = 1;
+				error = 0;
+	            if (OCD1_counter == OCD1_delay - 1 && !OC_Comp(current,-(int16_t)OCD1_th))
+	            {
+	                OCD1_counter = 0;
+	                OCD1_State = TRIP;
+	                printf("\nError: OCD1\n");
+	                if (OCDL_State != LATCH_TRIP) // OCDL触发后就不计数了
+	                    OCDL_counter++;           //放在这是为识别OCD_Fault上升沿，即OCD_Fault上升沿计数值达到锁存阈值，会触发OCDL
+	            }
+	            else if (OC_Comp(current,-(int16_t)OCD1_th))
+	            {
+	                OCD1_counter = 0;
+	                OCD1_State = NORMAL;
+	            }
+	            else
+	                OCD1_counter++;
+	            break;
+	        case TRIP:
+				alert = 0;
+				error = 1;
+	            if (OCD1_recounter == recoverytime - 1 && OC_Comp(current,-(int16_t)OCD_rec_th))
+	            {
+	                OCD1_recounter = 0;
+	                OCDL_DEC_counter = 0;
+	                OCD1_State = NORMAL;
+					printf("\nRecovery: OCD1\n");
+	            }   
+	            else if(OC_Comp(current,-(int16_t)OCD_rec_th))
+	            {
+	                OCD1_recounter ++;
+	            }
+	            else
+	            {
+	                OCD1_recounter = 0;
+	            }
+	            break;
+	        default:
+	            break;
+	    }
+	}
+	
 	*OCD1_alert = alert;
 	*OCD1_error = error;
 }
@@ -367,6 +388,7 @@ void OCD2_protect
 (
 				//input
 				const int16_t current,
+				const uint8_t OCD2_en,
 				const uint8_t OCD2_th,
 				const uint8_t OCD2_delay,
 				const int16_t OCD_rec_th,
@@ -377,67 +399,73 @@ void OCD2_protect
 )
 {
 	uint8_t alert,error;
-    switch (OCD2_State)
-    {
-        case NORMAL:   
-//            clearFlags(OCD2_ALERT,SafetyAlertA);
-//			clearFlags(OCD2_FAULT,SafetyStatusA);
+	if(!OCD2_en)
+	{
 			alert = 0;
 			error = 0;
-            if (!OC_Comp(current,-(int16_t)OCD2_th))
-            {
-                OCD2_counter++;
-                OCD2_State = ALERT;
-                printf("\nAlert: OCD2\n");
-            }
-            else if(OCDL_counter > 0)
-                OCDL_DEC_counter ++;
-            break;
-        case ALERT:
-//            setFlags(OCD2_ALERT, SafetyAlertA); // Safety Alert A[OCD2] = 1;
-			alert = 1;
-			error = 0;
-            if (OCD2_counter == OCD2_delay - 1 && !OC_Comp(current,-(int16_t)OCD2_th))
-            {
-                OCD2_counter = 0;
-                OCD2_State = TRIP;
-                printf("\nError: OCD2\n");
-                if (OCDL_State != LATCH_TRIP) // OCDL触发后就不计数了
-                    OCDL_counter++;           //放在这是为识别OCD_Fault上升沿，即OCD_Fault上升沿计数值达到锁存阈值，会触发OCDL
-            }
-            else if (OC_Comp(current,-(int16_t)OCD2_th))
-            {
-                OCD2_counter = 0;
-                OCD2_State = NORMAL;
-            }
-            else
-                OCD2_counter++;
-            break;
-        case TRIP:
-//            clearFlags(OCD2_ALERT, SafetyAlertA); // Safety Alert A[OCD2] = 0;
-//            setFlags(OCD2_FAULT, SafetyStatusA);  // Safety Status A[OCD2] = 1;
-			alert = 0;
-			error = 1;
-            if (OCD2_recounter == recoverytime - 1 && OC_Comp(current,-(int16_t)OCD_rec_th))
-            {
-                OCD2_recounter = 0;
-                OCDL_DEC_counter = 0;
-                OCD2_State = NORMAL;
-				printf("\nRecovery: OCD2\n");
-            }   
-            else if(OC_Comp(current,-(int16_t)OCD_rec_th))
-            {
-                OCD2_recounter ++;
-            }
-            else
-            {
-                OCD2_recounter = 0;
-            }
-            break;
-        default:
-            break;
-    }
-
+			OCD2_State = NORMAL;
+			OCD2_counter = 0;
+			OCD2_recounter = 0;
+	}
+	else
+	{
+	    switch (OCD2_State)
+	    {
+	        case NORMAL:   
+				alert = 0;
+				error = 0;
+	            if (!OC_Comp(current,-(int16_t)OCD2_th))
+	            {
+	                OCD2_counter++;
+	                OCD2_State = ALERT;
+	                printf("\nAlert: OCD2\n");
+	            }
+	            else if(OCDL_counter > 0)
+	                OCDL_DEC_counter ++;
+	            break;
+	        case ALERT:
+				alert = 1;
+				error = 0;
+	            if (OCD2_counter == OCD2_delay - 1 && !OC_Comp(current,-(int16_t)OCD2_th))
+	            {
+	                OCD2_counter = 0;
+	                OCD2_State = TRIP;
+	                printf("\nError: OCD2\n");
+	                if (OCDL_State != LATCH_TRIP) // OCDL触发后就不计数了
+	                    OCDL_counter++;           //放在这是为识别OCD_Fault上升沿，即OCD_Fault上升沿计数值达到锁存阈值，会触发OCDL
+	            }
+	            else if (OC_Comp(current,-(int16_t)OCD2_th))
+	            {
+	                OCD2_counter = 0;
+	                OCD2_State = NORMAL;
+	            }
+	            else
+	                OCD2_counter++;
+	            break;
+	        case TRIP:
+				alert = 0;
+				error = 1;
+	            if (OCD2_recounter == recoverytime - 1 && OC_Comp(current,-(int16_t)OCD_rec_th))
+	            {
+	                OCD2_recounter = 0;
+	                OCDL_DEC_counter = 0;
+	                OCD2_State = NORMAL;
+					printf("\nRecovery: OCD2\n");
+	            }   
+	            else if(OC_Comp(current,-(int16_t)OCD_rec_th))
+	            {
+	                OCD2_recounter ++;
+	            }
+	            else
+	            {
+	                OCD2_recounter = 0;
+	            }
+	            break;
+	        default:
+	            break;
+	    }
+	}
+	
 	*OCD2_alert = alert;
 	*OCD2_error = error;
 }
@@ -446,6 +474,7 @@ void OCD3_protect
 (
 				//input
 				const int16_t CC1_current,
+				const uint8_t OCD3_en,
 				const int16_t OCD3_th,
 				const uint8_t OCD3_delay,
 				const int16_t OCD_rec_th,
@@ -456,67 +485,73 @@ void OCD3_protect
 )
 {
 	uint8_t alert,error;
-    switch (OCD3_State)
-    {
-        case NORMAL:   
-//            clearFlags(OCD3_ALERT,SafetyAlertA);
-//			clearFlags(OCD3_FAULT,SafetyStatusA);
+	if(!OCD3_en)
+	{
 			alert = 0;
 			error = 0;
-            if (!OC_Comp(CC1_current,OCD3_th))
-            {
-                OCD3_counter++;
-                OCD3_State = ALERT;
-                printf("\nAlert: OCD3\n");
-            }
-            else if(OCDL_counter > 0)
-                OCDL_DEC_counter ++;
-            break;
-        case ALERT:
-//            setFlags(OCD3_ALERT, SafetyAlertA); // Safety Alert A[OCD3] = 1;
-			alert = 1;
-			error = 0;
-            if (OCD3_counter == OCD3_delay - 1 && !OC_Comp(CC1_current,OCD3_th))
-            {
-                OCD3_counter = 0;
-                OCD3_State = TRIP;
-                printf("\nError: OCD3\n");
-                if (OCDL_State != LATCH_TRIP) // OCDL触发后就不计数了
-                    OCDL_counter++;           //放在这是为识别OCD_Fault上升沿，即OCD_Fault上升沿计数值达到锁存阈值，会触发OCDL
-            }
-            else if (OC_Comp(CC1_current,OCD3_th))
-            {
-                OCD3_counter = 0;
-                OCD3_State = NORMAL;
-            }
-            else
-                OCD3_counter++;
-            break;
-        case TRIP:
-//            clearFlags(OCD3_ALERT, SafetyAlertA); // Safety Alert A[OCD3] = 0;
-//            setFlags(OCD3_FAULT, SafetyStatusA);  // Safety Status A[OCD3] = 1;
-			alert = 0;
-			error = 1;
-            if (OCD3_recounter == recoverytime - 1 && OC_Comp(CC1_current,OCD_rec_th))
-            {
-                OCD3_recounter = 0;
-                OCDL_DEC_counter = 0;
-                OCD3_State = NORMAL;
-				printf("\nRecovery: OCD3\n");
-            }   
-            else if(OC_Comp(CC1_current,OCD_rec_th))
-            {
-                OCD3_recounter ++;
-            }
-            else
-            {
-                OCD3_recounter = 0;
-            }
-            break;
-        default:
-            break;
-    }
-
+			OCD3_State = NORMAL;
+			OCD3_counter = 0;
+			OCD3_recounter = 0;
+	}
+	else
+	{
+	    switch (OCD3_State)
+	    {
+	        case NORMAL:   
+				alert = 0;
+				error = 0;
+	            if (!OC_Comp(CC1_current,OCD3_th))
+	            {
+	                OCD3_counter++;
+	                OCD3_State = ALERT;
+	                printf("\nAlert: OCD3\n");
+	            }
+	            else if(OCDL_counter > 0)
+	                OCDL_DEC_counter ++;
+	            break;
+	        case ALERT:
+				alert = 1;
+				error = 0;
+	            if (OCD3_counter == OCD3_delay - 1 && !OC_Comp(CC1_current,OCD3_th))
+	            {
+	                OCD3_counter = 0;
+	                OCD3_State = TRIP;
+	                printf("\nError: OCD3\n");
+	                if (OCDL_State != LATCH_TRIP) // OCDL触发后就不计数了
+	                    OCDL_counter++;           //放在这是为识别OCD_Fault上升沿，即OCD_Fault上升沿计数值达到锁存阈值，会触发OCDL
+	            }
+	            else if (OC_Comp(CC1_current,OCD3_th))
+	            {
+	                OCD3_counter = 0;
+	                OCD3_State = NORMAL;
+	            }
+	            else
+	                OCD3_counter++;
+	            break;
+	        case TRIP:
+				alert = 0;
+				error = 1;
+	            if (OCD3_recounter == recoverytime - 1 && OC_Comp(CC1_current,OCD_rec_th))
+	            {
+	                OCD3_recounter = 0;
+	                OCDL_DEC_counter = 0;
+	                OCD3_State = NORMAL;
+					printf("\nRecovery: OCD3\n");
+	            }   
+	            else if(OC_Comp(CC1_current,OCD_rec_th))
+	            {
+	                OCD3_recounter ++;
+	            }
+	            else
+	            {
+	                OCD3_recounter = 0;
+	            }
+	            break;
+	        default:
+	            break;
+	    }
+	}
+	
 	*OCD3_alert = alert;
 	*OCD3_error = error;
 }
@@ -526,6 +561,7 @@ void OCDL_protect
 					//input
 					const int16_t current,
 					const uint16_t LD,
+					const uint8_t OCDL_en,
 					const uint8_t OCDL_limit,                         
 					const uint8_t OCDL_dec_delay,                     //实际 s 级别延时
 					const uint8_t OCDL_recoverytime,                 //实际 s 级别延时 Settings:Protection:Protection Configuration[OCDL_CURR_RECOV] 有效时该恢复机制才会起作用
@@ -538,70 +574,76 @@ void OCDL_protect
 )
 {
 	uint8_t alert,error;
-    switch (OCDL_State)
-    {
-        case LATCH_RESET:   
-//            clearFlags(OCDL_ALERT,SafetyAlertC);		//Safety Alert C[OCDL] = 0;
-//			clearFlags(OCDL_FAULT,SafetyStatusC);		//Safety Status C[OCDL] = 0;
+	if(!OCDL_en)
+	{
 			alert = 0;
 			error = 0;
-            if(OCDL_counter > 0)
-            {
-				OCDL_State = LATCH_ALERT;
-				printf("\nAlert: OCD Latch\n");
-			}
-            break;
-        case LATCH_ALERT:
-//            setFlags(OCDL_ALERT,SafetyAlertC);			//Safety Alert C[OCDL] = 1;
-			alert = 1;
-			error = 0;
-            if(OCDL_counter == OCDL_limit)
-            {
-                OCDL_counter = 0;
-                OCDL_State = LATCH_TRIP;
-				printf("\nError: OCD Latch\n");
-            }
-            else if(OCDL_counter == 0)
-            {
-                OCDL_State = LATCH_RESET;
-            }
-            else if(OCDL_DEC_counter >= OCDL_dec_delay) 
-            {   
-                OCDL_counter --;
-            }
-            break;
-        case LATCH_TRIP:
-//            clearFlags(OCDL_ALERT,SafetyAlertC);		//Safety Alert  C[OCDL] = 0;
-//			setFlags(OCDL_FAULT,SafetyStatusC);			//Safety Status C[OCDL] = 1;
-			alert = 0;
-			error = 1;
-            if(!LD)
-            {
-                OCDL_recounter = 0;
-                OCDL_State = LATCH_RESET;
-				printf("\nRecovery: OCD Latch from LD detect\n");
-            }
-            else if(OCDL_curr_recov && (OCDL_recounter == OCDL_recoverytime-1) && OC_Comp(current,(int16_t)OCDL_rec_th))
-            {
-                OCDL_recounter = 0;
-                OCDL_State = LATCH_RESET;
-				printf("\nRecovery: OCD Latch from Current\n");
-            } 
-            //else if (基于主机子命令恢复)
+			OCDL_State = LATCH_RESET;
+			OCDL_counter = 0;
+			OCDL_recounter = 0;
+	}
+	else
+	{
+	    switch (OCDL_State)
+	    {
+	        case LATCH_RESET:   
+				alert = 0;
+				error = 0;
+	            if(OCDL_counter > 0)
+	            {
+					OCDL_State = LATCH_ALERT;
+					printf("\nAlert: OCD Latch\n");
+				}
+	            break;
+	        case LATCH_ALERT:
+				alert = 1;
+				error = 0;
+	            if(OCDL_counter == OCDL_limit)
+	            {
+	                OCDL_counter = 0;
+	                OCDL_State = LATCH_TRIP;
+					printf("\nError: OCD Latch\n");
+	            }
+	            else if(OCDL_counter == 0)
+	            {
+	                OCDL_State = LATCH_RESET;
+	            }
+	            else if(OCDL_DEC_counter >= OCDL_dec_delay) 
+	            {   
+	                OCDL_counter --;
+	            }
+	            break;
+	        case LATCH_TRIP:
+				alert = 0;
+				error = 1;
+	            if(!LD)
+	            {
+	                OCDL_recounter = 0;
+	                OCDL_State = LATCH_RESET;
+					printf("\nRecovery: OCD Latch from LD detect\n");
+	            }
+	            else if(OCDL_curr_recov && (OCDL_recounter == OCDL_recoverytime-1) && OC_Comp(current,(int16_t)OCDL_rec_th))
+	            {
+	                OCDL_recounter = 0;
+	                OCDL_State = LATCH_RESET;
+					printf("\nRecovery: OCD Latch from Current\n");
+	            } 
+	            //else if (基于主机子命令恢复)
 
-            else if(OCDL_curr_recov && OC_Comp(current,(int16_t)OCDL_rec_th))
-            {
-                OCDL_recounter ++;
-            }  
-            else
-            {
-                OCDL_recounter = 0;
-            }
-            break;
-        default:
-            break;
-    }
-
+	            else if(OCDL_curr_recov && OC_Comp(current,(int16_t)OCDL_rec_th))
+	            {
+	                OCDL_recounter ++;
+	            }  
+	            else
+	            {
+	                OCDL_recounter = 0;
+	            }
+	            break;
+	        default:
+	            break;
+	    }
+	}
+	
 	*OCDL_alert = alert;
 	*OCDL_error = error;
 }
@@ -610,6 +652,7 @@ void OCC_protect
 (
 				//input
 				const int16_t current,
+				const uint8_t OCC_en,
 				const uint8_t OCC_th,
 				const uint8_t OCC_delay,
 				const int16_t OCC_crec_th,
@@ -622,80 +665,87 @@ void OCC_protect
 )
 {
 	uint8_t alert,error;
-    switch (OCC_State)
-    {
-        case NORMAL:   
-//            clearFlags(OCC_ALERT,SafetyAlertA);
-//			clearFlags(OCC_FAULT,SafetyStatusA);
+	if(!OCC_en)
+	{
 			alert = 0;
 			error = 0;
-            if(OC_Comp(current,(int16_t)OCC_th))
-            {
-                OCC_counter ++;
-                OCC_State = ALERT;
-				printf("\nAlert: OCC\n");
-            }
+			OCC_State = NORMAL;
+			OCC_counter = 0;
+			OCC_CREC_recounter = 0;
+			OCC_VREC_recounter = 0;
+	}
+	else
+	{
+	    switch (OCC_State)
+	    {
+	        case NORMAL:   
+				alert = 0;
+				error = 0;
+	            if(OC_Comp(current,(int16_t)OCC_th))
+	            {
+	                OCC_counter ++;
+	                OCC_State = ALERT;
+					printf("\nAlert: OCC\n");
+	            }
 
-            break;
-        case ALERT:
-//            setFlags(OCC_ALERT,SafetyAlertA);	//Safety Alert A[SCD] = 1;
-			alert = 1;
-			error = 0;
-            if(OCC_counter == OCC_delay-1 && OC_Comp(current,(int16_t)OCC_th))
-            {
-                OCC_counter = 0;
-                OCC_State = TRIP;
-				printf("\nError: OCC\n");
-            }    
-            else if (!OC_Comp(current,(int16_t)OCC_th))
-            {
-                OCC_counter = 0;
-                OCC_State = NORMAL;
-            }
-            else
-                OCC_counter ++;
-            break;
-        case TRIP:
-//			clearFlags(OCC_ALERT,SafetyAlertA);		//Safety Alert A[OCC] = 0;
-//			setFlags(OCC_FAULT,SafetyStatusA);		//Safety Status A[OCC] = 1;
-			alert = 0;
- 			error = 1;
-            if (OCC_CREC_recounter == recoverytime-1 && !OC_Comp(current,(int16_t)OCC_crec_th))           //基于电流恢复
-            {
-                OCC_CREC_recounter = 0;
-                OCC_State = NORMAL;
-				printf("\nRecovery: OCC from current \n");
-                break;
-            }
-            else if(!OC_Comp(current,(int16_t)OCC_crec_th))
-            {
-                OCC_CREC_recounter ++;
-            }
-            else
-            {
-                OCC_CREC_recounter = 0;
-            }
+	            break;
+	        case ALERT:
+				alert = 1;
+				error = 0;
+	            if(OCC_counter == OCC_delay-1 && OC_Comp(current,(int16_t)OCC_th))
+	            {
+	                OCC_counter = 0;
+	                OCC_State = TRIP;
+					printf("\nError: OCC\n");
+	            }    
+	            else if (!OC_Comp(current,(int16_t)OCC_th))
+	            {
+	                OCC_counter = 0;
+	                OCC_State = NORMAL;
+	            }
+	            else
+	                OCC_counter ++;
+	            break;
+	        case TRIP:
+				alert = 0;
+	 			error = 1;
+	            if (OCC_CREC_recounter == recoverytime-1 && !OC_Comp(current,(int16_t)OCC_crec_th))           //基于电流恢复
+	            {
+	                OCC_CREC_recounter = 0;
+	                OCC_State = NORMAL;
+					printf("\nRecovery: OCC from current \n");
+	                break;
+	            }
+	            else if(!OC_Comp(current,(int16_t)OCC_crec_th))
+	            {
+	                OCC_CREC_recounter ++;
+	            }
+	            else
+	            {
+	                OCC_CREC_recounter = 0;
+	            }
 
-            if(OCC_VREC_recounter == recoverytime-1 && (stack_pack_delta >= OCC_vrec_delta) )   //基于pack-stack电压恢复
-            {
-                OCC_VREC_recounter = 0;
-                OCC_State = NORMAL;
-				printf("\nRecovery: OCC from Stack-Pack voltage\n");
-                break;
-            }
-            else if(stack_pack_delta >= OCC_vrec_delta)
-            {
-                OCC_VREC_recounter ++;
-            }
-            else
-            {
-                OCC_VREC_recounter = 0;
-            }    
-            break;
-        default:
-            break;
-    } 
-
+	            if(OCC_VREC_recounter == recoverytime-1 && (stack_pack_delta >= OCC_vrec_delta) )   //基于pack-stack电压恢复
+	            {
+	                OCC_VREC_recounter = 0;
+	                OCC_State = NORMAL;
+					printf("\nRecovery: OCC from Stack-Pack voltage\n");
+	                break;
+	            }
+	            else if(stack_pack_delta >= OCC_vrec_delta)
+	            {
+	                OCC_VREC_recounter ++;
+	            }
+	            else
+	            {
+	                OCC_VREC_recounter = 0;
+	            }    
+	            break;
+	        default:
+	            break;
+	    } 
+	}
+	
 	*OCC_alert = alert;
 	*OCC_error = error;
 }
