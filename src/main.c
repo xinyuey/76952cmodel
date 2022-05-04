@@ -332,8 +332,8 @@ void update_config
 	*DSG_Current_TH = 100;
 	
 	*TS1_Config = 0x07; 
-	*TS2_Config = 0x0B;
-	*TS3_Config = 0x0F;
+	*TS2_Config = 0x00;
+	*TS3_Config = 0x00;
 	*TINT_EN = 0;							
 	*TINT_FETT = 0;	
 	*OTC_EN = 1;
@@ -557,17 +557,22 @@ void update_register
 void BQ76952
 (
 				//input
-                const uint16_t *CellVoltage,                   
-                const int16_t current,          
-                const uint16_t charger,         
-				const uint16_t LD,
-				const int16_t TS1,             
-                const int16_t TS2,             
-                const int16_t TS3,
-//                const uint8_t DCHG,           
-//                const uint8_t DDSG,          
+                const uint16_t *CellVoltage,  	//16节电池差分电压                 
+                const int16_t current,        	//敏感电阻差分电压
+                const uint16_t charger,       	//充电器检测结果
+				const uint16_t LD,				//负载检测结果
+				const int16_t TS1,             	//TS1热敏电阻端温度(CELL)
+                const int16_t TS2,             	//TS2引脚电压(WAKEON)
+                const int16_t TS3,				//TS3热敏电阻温度(FET)
+                //PACK Pin电压
+                //BAT Pin电压
+                //LD Pin电压
+                //RST_SHUT Pin电压
+                //DCHG Pin电压    
+                //DDSG Pin电压   
+                
 				//output
-                uint8_t *CHG_on,                
+                uint8_t *CHG_on,
                 uint8_t *DSG_on,               
                 uint8_t *PCHG_on,               
                 uint8_t *PDSG_on,
@@ -885,6 +890,32 @@ void BQ76952
 			   	&SF_ALERT_MASKC,
 			   	&PF_ALERT_MASKA
 				);
+
+	int32_t Stack_Voltage = 32000;	//电池组电压mv
+	int16_t Pack_Stack_Delta = 0;	//PACK-STACK电压mv
+	int16_t TS2_voltage = 1200;		//TS2引脚电压mv
+	int16_t LD_voltage = 1200;		//LD引脚电压mv
+	int16_t CC1_current = -10;		//CC1电流mA
+	int16_t Internal_Temp = 40;		//内部温度°C
+	uint8_t RST_SHUT_L_1s = 0;
+	uint8_t RST_SHUT_H_1s = 0;
+	uint8_t work_mode;
+	BQ76852_work_mode(
+				//input signal
+				CellVoltage,		//VC1-16 mv		
+				Stack_Voltage,				
+				Pack_Stack_Delta,				
+				TS2_voltage,				
+				LD_voltage,						
+				current,			//RSP-RSN mv					
+				CC1_current,				
+				Internal_Temp,				
+				RST_SHUT_L_1s,		//RST_SHUT拉低1s
+				RST_SHUT_H_1s,		//RST_SHUT拉高1s
+				//output
+				&work_mode
+				);
+	printf("work_mode = %d\n",work_mode);
 	
     CUV_protect(
 				//input
@@ -969,7 +1000,7 @@ void BQ76952
 				&OCD2_error
 				);
 	
-	int16_t CC1_current = -10;		//CC1读数结果,用于OCD3判断
+	//int16_t CC1_current = -10;		//CC1读数结果,用于OCD3判断
 	OCD3_protect(
 				//input
 				CC1_current,
@@ -1013,7 +1044,7 @@ void BQ76952
 				&OCC_error
 				);
 	
-	int16_t Internal_Temp = 40;		//内部温度测量值
+	//int16_t Internal_Temp = 40;		//内部温度测量值
 	InternT_protect(
 				//input
 				Internal_Temp,
@@ -1127,11 +1158,11 @@ void BQ76952
 				&LVL2_error
 				);
 	
-	uint8_t LD_TOS_Delta = 10;	//用于PDSG基于电压关闭机制（阈值PDSG_StopDelta）
+	uint8_t LD_Stack_Delta = 10;	//用于PDSG基于电压关闭机制（阈值PDSG_StopDelta）
 	FET_auto_control(
 				//input
 				CellVoltage,
-				LD_TOS_Delta,
+				LD_Stack_Delta,
 				FET_ctrl_en,
 				FET_init_off,
 				FET_en,

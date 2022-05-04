@@ -142,7 +142,7 @@ uint16_t readDirectMemory(uint8_t addr)
 		printf("Error: the address %#x cant't match one command!\n",addr);
 	    return 0;
 	}
-    printf("%#x %s = %#x\n",addr,mm.DirectMemory[info].name,mm.DirectMemory[info].data);
+    //printf("%#x %s = %#x\n",addr,mm.DirectMemory[info].name,mm.DirectMemory[info].data);
     return mm.DirectMemory[info].data;
 }
 
