@@ -1,5 +1,6 @@
 #include "common.h"
 
+#define RSPN 200	//敏感电阻阻值 单位毫欧
 int input_counter = 0;                          //用于输入向量的计数
 
 void BQ76952_Vcell
@@ -564,9 +565,10 @@ void BQ76952
 				const int16_t TS1,             	//TS1热敏电阻端温度(CELL)
                 const int16_t TS2,             	//TS2引脚电压(WAKEON)
                 const int16_t TS3,				//TS3热敏电阻温度(FET)
-                //PACK Pin电压
-                //BAT Pin电压
-                //LD Pin电压
+                //const uint8_t RST_SHUT,
+                //const int16_t BAT,
+                //const int16_t PACK,
+                //const int16_t LD,
                 //RST_SHUT Pin电压
                 //DCHG Pin电压    
                 //DDSG Pin电压   
@@ -891,11 +893,12 @@ void BQ76952
 			   	&PF_ALERT_MASKA
 				);
 
-	int32_t Stack_Voltage = 32000;	//电池组电压mv
-	int16_t Pack_Stack_Delta = 0;	//PACK-STACK电压mv
+//	int32_t Stack_Voltage = 64000;	//电池组电压mv
+//	int16_t Pack_Stack_Delta = 0;	//PACK-STACK电压mv
+	int16_t PACK_voltage = 6400;	//PACK引脚电压mv
 	int16_t TS2_voltage = 1200;		//TS2引脚电压mv
 	int16_t LD_voltage = 1200;		//LD引脚电压mv
-	int16_t CC1_current = -10;		//CC1电流mA
+	int16_t CC1_current = (current*1000)/RSPN;		//CC1电流mA
 	int16_t Internal_Temp = 40;		//内部温度°C
 	uint8_t RST_SHUT_L_1s = 0;
 	uint8_t RST_SHUT_H_1s = 0;
@@ -903,8 +906,7 @@ void BQ76952
 	BQ76852_work_mode(
 				//input signal
 				CellVoltage,		//VC1-16 mv		
-				Stack_Voltage,				
-				Pack_Stack_Delta,				
+				PACK_voltage,				
 				TS2_voltage,				
 				LD_voltage,						
 				current,			//RSP-RSN mv					

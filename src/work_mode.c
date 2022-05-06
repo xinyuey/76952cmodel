@@ -54,8 +54,9 @@ void BQ76852_work_mode
 (
 				//input signal
 				const uint16_t *CellVoltage,				//电池电压
-				const int32_t stack_voltage,				//电池组电压
-				const int16_t pack_stack_Delta,				//PACK-STACK电压
+//				const int32_t stack_voltage,				//电池组电压
+//				const int16_t pack_stack_Delta,				//PACK-STACK电压
+				const int16_t PACK_voltage,
 				const int16_t TS2_voltage,					//TS2电压
 				const int16_t LD_voltage,							//LD电压
 				const int16_t current,						//电流
@@ -81,12 +82,16 @@ void BQ76852_work_mode
 )
 {
 	uint16_t min_Vcell = *CellVoltage;
+	int16_t stack_voltage = 0;
+	int16_t pack_stack_Delta = 0;
     for(int i=1;i<16;i++)
     {
+    	STACK_voltage = STACK_voltage + *CellVoltage;
         if(*CellVoltage < min_Vcell)
             min_Vcell = *CellVoltage;
         CellVoltage ++;
     }
+	pack_stack_Delta = PACK_voltage - stack_voltage;
 	switch (mode_state)
 		{
 		case normal:
@@ -128,7 +133,7 @@ void BQ76852_work_mode
 			}
 			
 			//进入睡眠模式
-			if(S2N_flag && sleep_hys_counter == SLEEP_hysteresis_time)
+			if(S2N_flag && sleep_hys_counter == SLEEP_hysteresis_time)//滞后：退出睡眠模式后的一段时间内不能进入睡眠模式
 			{
 				sleep_hys_counter = 0;
 				S2N_flag = 0;
