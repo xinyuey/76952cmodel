@@ -642,11 +642,11 @@ void InternT_protect
 					&utint_alert,
 					&utint_error
 					);
-		
+
 		*OTINT_alert = otint_alert;
 		*OTINT_error = otint_error;
 		*UTINT_alert = utint_alert;
-		*UTINT_alert = utint_error;
+		*UTINT_error = utint_error;
 	}
 }
 

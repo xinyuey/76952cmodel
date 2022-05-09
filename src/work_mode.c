@@ -22,6 +22,16 @@
 #define WAKEONTS2_TH 1000
 #define WAKEONLD_TH 1500
 
+typedef enum{
+        normal=1,
+        sleep,
+        deepsleep,
+        shutdown,
+        soft_shutdown
+        }WORKMODE;
+		
+WORKMODE mode_state = NORMAL;
+
 const uint8_t SLEEP_en = 1; 					//睡眠模式使能
 const int16_t SLEEP_current_th = 20; 			//进入或退出睡眠模式的CC1电流阈值，20mA
 const int16_t SLEEP_wake_current_th = 500;		//退出睡眠模式的电流阈值,500mA
@@ -35,63 +45,38 @@ const uint8_t SHUTDOWN_temp_th = 85;			//进入关机模式的内部温度阈值
 const uint8_t SHUTDOWN_temp_delay = 5;			//进入关机模式的内部温度延时,5s
 const uint8_t DEEPSLEEP_PF_en = 0;				//使能通过永久性故障进入深度睡眠,0
 
-
-typedef enum{
-        normal=1,
-        sleep,
-        deepsleep,
-        shutdown,
-        soft_shutdown
-        }WORKMODE;
-WORKMODE mode_state = NORMAL;
 int N2SD_flag = 0;
 int S2N_flag = 0;
 int S2SD_flag = 0;
 int sleep_hys_counter = 0;
 int shutdown_lv_counter = 0;
 int shutdown_temp_counter = 0;
+
 void BQ76852_work_mode
 (
 				//input signal
 				const uint16_t *CellVoltage,				//电池电压
-//				const int32_t stack_voltage,				//电池组电压
-//				const int16_t pack_stack_Delta,				//PACK-STACK电压
-				const int16_t PACK_voltage,
+				const int32_t stack_voltage,				//电池组电压
+				const int32_t pack_voltage,
 				const int16_t TS2_voltage,					//TS2电压
-				const int16_t LD_voltage,							//LD电压
+				const int32_t LD_voltage,							//LD电压
 				const int16_t current,						//电流
 				const int16_t CC1_current,					//CC1电流
 				const int16_t internal_temp,				//内部温度
-				const uint8_t RST_SHUT_L_1s,				//RST_SHUT拉低1s
+				const uint8_t RST_SHUT,						//RST_SHUT引脚电平
 				const uint8_t RST_SHUT_H_1s,				//RST_SHUT拉高1s
-				//input config
-//				const uint8_t SLEEP_en,						//睡眠模式使能
-//				const int16_t SLEEP_current_th,				//进入或退出睡眠模式的CC1电流阈值，20mA
-//				const int16_t SLEEP_wake_current_th,		//退出睡眠模式的电流阈值,500mA
-//				const uint8_t SLEEP_hysteresis_time,		//退出再进入睡眠模式的滞后时间,10s
-//				const int16_t SLEEP_charger_th,				//退出睡眠模式的stack端电压阈值，20V
-//				const int16_t SLEEP_pack_stack_delta,		//退出睡眠模式的pack-stack电压阈值，2V
-//				const int16_t SHUTDOWN_cell_th,				//进入关机模式的电池电压阈值,0V
-//				const int16_t SHUTDOWN_stack_th,			//进入关机模式的电池组电压阈值,6V
-//				const uint8_t SHUTDOWN_lv_delay,			//进入关机模式的低电压延时，1s
-//				const uint8_t SHUTDOWN_temp_th,				//进入关机模式的内部温度阈值,85°C
-//				const uint8_t SHUTDOWN_temp_delay,			//进入关机模式的内部温度延时,5s
-//				const uint8_t DEEPSLEEP_PF_en,				//使能通过永久性故障进入深度睡眠,0
 				//output
 				uint8_t *work_mode
 )
 {
 	uint16_t min_Vcell = *CellVoltage;
-	int16_t stack_voltage = 0;
-	int16_t pack_stack_Delta = 0;
     for(int i=1;i<16;i++)
     {
-    	STACK_voltage = STACK_voltage + *CellVoltage;
         if(*CellVoltage < min_Vcell)
             min_Vcell = *CellVoltage;
         CellVoltage ++;
     }
-	pack_stack_Delta = PACK_voltage - stack_voltage;
+	int32_t pack_stack_Delta = pack_voltage - stack_voltage;
 	switch (mode_state)
 		{
 		case normal:
@@ -154,6 +139,10 @@ void BQ76852_work_mode
 				mode_state = deepsleep;
 				break;
 			}
+
+//			//进入正常模式
+//			if(RST_SHUT && !RST_SHUT_H_1s)
+//				mode_state = normal;
 			break;
 		case sleep:
 			//进入关机模式
@@ -205,7 +194,7 @@ void BQ76852_work_mode
 				S2N_flag = 1;
 				break;
 			}
-			else if(RST_SHUT_L_1s)//基于RST_SHUT引脚拉低1s退出SLEEP模式(也可以通过主机子命令)
+			else if(RST_SHUT && !RST_SHUT_H_1s)//基于RST_SHUT引脚拉低1s退出SLEEP模式(也可以通过主机子命令)
 			{
 				mode_state = normal;
 				S2N_flag = 1;
@@ -233,7 +222,7 @@ void BQ76852_work_mode
 			}
 
 			//进入正常模式
-			if(RST_SHUT_L_1s)//基于RST_SHUT引脚拉低1s退出DEEPSLEEP模式(也可以通过主机子命令)
+			if(RST_SHUT && !RST_SHUT_H_1s)//基于RST_SHUT引脚拉低1s退出DEEPSLEEP模式(也可以通过主机子命令)
 			{
 				mode_state = normal;
 				break;

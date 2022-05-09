@@ -114,13 +114,19 @@ void FET_auto_control
 		//CHG_ctrl
 		//Settings:Protection:CHG FET Protections A
 		if((COV_error && (CHG_COV & CHG_protectionA)) | (OCC_error && (CHG_OCC & CHG_protectionA)) | (SCD_error && (CHG_SCD & CHG_protectionA)))
- 			CHG_ctrl = 0;
+		{
+			CHG_ctrl = 0;
+		}
 		//Settings:Protection:CHG FET Protections B
 		else if((UTC_error && (CHG_UTC & CHG_protectionB)) | (OTC_error && (CHG_OTC & CHG_protectionB)) | (OTF_error && (CHG_OTF & CHG_protectionB)) | (UTINT_error && (CHG_UTINT & CHG_protectionB)) | (OTINT_error && (CHG_OTINT & CHG_protectionB)))
+		{
 			CHG_ctrl = 0;
+		}
 		//Settings:Protection:CHG FET Protections C
 		else if((PTOS_error && (CHG_PTO & CHG_protectionC)) | (COVL_error && (CHG_COVL & CHG_protectionC)) | (SCDL_error && (CHG_SCDL & CHG_protectionC)))
+		{
 			CHG_ctrl = 0;
+		}
 		else
 			CHG_ctrl = 1;
 		
@@ -171,7 +177,7 @@ void FET_auto_control
 	}
 	else//完全手动控制FETs(FET_TEST模式)
 		return;
-	
+
 	*CHG_ON = CHG_ctrl;
 	*PCHG_ON = PCHG_ctrl;
 	*PDSG_ON = PDSG_ctrl;

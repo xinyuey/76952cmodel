@@ -1,7 +1,11 @@
 #include "common.h"
 
 #define RSPN 200	//敏感电阻阻值 单位毫欧
+#define RST_SHUT_1S 10
+
 int input_counter = 0;                          //用于输入向量的计数
+
+int RS_counter_h = 0;
 
 void BQ76952_Vcell
 (					FILE* file,
@@ -9,14 +13,17 @@ void BQ76952_Vcell
 					int16_t *current,
 					uint16_t *charger,
 					uint16_t *LD,
+					int32_t *BAT_Pin,
+					int32_t *PACK_Pin,
+					int32_t *LD_Pin,
 					int16_t *TS1,
 					int16_t *TS2,
 					int16_t *TS3)
 {
 	uint16_t VC[16];
 	int16_t current_temp;
-	uint16_t charger_temp;
-	uint16_t LD_temp;
+	uint16_t charger_temp,LD_temp;
+	int32_t BAT_temp,PACK_temp,LD_p_temp;
 	int16_t TS1_temp,TS2_temp,TS3_temp;
 	
     for(int i=0;i<16;i++)
@@ -26,22 +33,28 @@ void BQ76952_Vcell
 		CellVoltage ++;
 		//writeDirectMemory(CellVoltage[i],0x14 + i*2);
 		//readDirectMemory(0x14 + i*2);
-		
     }
 	
     fscanf(file,"%hd",&current_temp);
-    fscanf(file,"%hu",&charger_temp);
+	fscanf(file,"%hu",&charger_temp);
     fscanf(file,"%hu",&LD_temp);
+    fscanf(file,"%hd",&BAT_temp);
+    fscanf(file,"%hd",&PACK_temp);
+    fscanf(file,"%hd",&LD_temp);
 	fscanf(file,"%hd",&TS1_temp);
 	fscanf(file,"%hd",&TS2_temp);
 	fscanf(file,"%hd",&TS3_temp);
-	
 	*current = current_temp;
 	*charger = charger_temp;
 	*LD = LD_temp;
+	*BAT_Pin = BAT_temp;
+	*PACK_Pin = PACK_temp;
+	*LD_Pin = LD_p_temp;
 	*TS1 = TS1_temp;
 	*TS2 = TS2_temp;
 	*TS3 = TS3_temp;
+	
+
 }
 
 //void BQ76952_Init()
@@ -73,6 +86,7 @@ int main()
 	uint16_t charger,LD;                            //充电器检测结果与负载检测结果
 	int16_t  current;                               //电流结果输入
 	int16_t TS1,TS2,TS3;
+	int32_t BAT_Pin,PACK_Pin,LD_Pin;
 	uint8_t CHG_ON,DSG_ON,PCHG_ON,PDSG_ON;
 	uint8_t FUSE = 0;
 	uint8_t ALERT;
@@ -80,7 +94,8 @@ int main()
     //fp = fopen("../sim/COV_COVL_TEST.txt","r");    //testcase自定义Vcell
     //fp = fopen("../sim/CUV_TEST.txt","r");
     //fp = fopen("../sim/SUPPLY_TEST.txt","r");
-    fp = fopen("../sim/TEST_case.txt","r");
+    //fp = fopen("../sim/TEST_case.txt","r");
+	fp = fopen("../sim/testcase.txt","r");
     if(fp==NULL)
     {  
 		printf("File cannot open! " );  
@@ -95,15 +110,11 @@ int main()
      while (!feof(fp))
     //while(1)
     {
-        /*
-        input_counter++;
-	    printf("\nNext input %d... ...\n",input_counter);*/
 		cycle_counter++;
 		printf("\n#%d\n",cycle_counter);
 		
-        BQ76952_Vcell(fp,&CellVoltage,&current,&charger,&LD,&TS1,&TS2,&TS3);  //Supply to VC1-VC16
-        BQ76952(&CellVoltage,current,charger,LD,TS1,TS2,TS3,&CHG_ON,&DSG_ON,&PCHG_ON,&PDSG_ON,&FUSE,&ALERT);//DUT_BQ76952
-
+		BQ76952_Vcell(fp,&CellVoltage,&current,&charger,&LD,&BAT_Pin,&PACK_Pin,&LD_Pin,&TS1,&TS2,&TS3);  //Supply to VC1-VC16
+        BQ76952(&CellVoltage,current,charger,LD,BAT_Pin,PACK_Pin,LD_Pin,TS1,TS2,TS3,&CHG_ON,&DSG_ON,&PCHG_ON,&PDSG_ON,&FUSE,&ALERT);//DUT_BQ76952
 		printf("\nCHG_ON = %d\n",CHG_ON);
 		printf("DSG_ON = %d\n",DSG_ON);
 		printf("PCHG_ON = %d\n",PCHG_ON);
@@ -320,7 +331,7 @@ void update_config
 	*OCDL_REC_TH = -10;                       //mV单位  原始寄存器单位为mA注意连接时单位
 
 	*OCC_EN = 1;
-	*OCC_TH = 4;                              //mV
+	*OCC_TH = 100;                              //mV
 	*OCC_DLY = 2;                             //实际延时 ms 级别
 	*OCC_CREC_TH = 1;                         // mV单位  原始寄存器单位为mA注意连接时单位
 	*OCC_VREC_Delta = 200;                    // 10mV单位
@@ -562,13 +573,13 @@ void BQ76952
                 const int16_t current,        	//敏感电阻差分电压
                 const uint16_t charger,       	//充电器检测结果
 				const uint16_t LD,				//负载检测结果
-				const int16_t TS1,             	//TS1热敏电阻端温度(CELL)
+                const int32_t BAT_Pin,
+                const int32_t PACK_Pin,
+                const int32_t LD_Pin,
+                const int16_t TS1,             	//TS1热敏电阻端温度(CELL)
                 const int16_t TS2,             	//TS2引脚电压(WAKEON)
                 const int16_t TS3,				//TS3热敏电阻温度(FET)
-                //const uint8_t RST_SHUT,
-                //const int16_t BAT,
-                //const int16_t PACK,
-                //const int16_t LD,
+                const uint8_t RST_SHUT,
                 //RST_SHUT Pin电压
                 //DCHG Pin电压    
                 //DDSG Pin电压   
@@ -893,32 +904,40 @@ void BQ76952
 			   	&PF_ALERT_MASKA
 				);
 
-//	int32_t Stack_Voltage = 64000;	//电池组电压mv
-//	int16_t Pack_Stack_Delta = 0;	//PACK-STACK电压mv
-	int16_t PACK_voltage = 6400;	//PACK引脚电压mv
-	int16_t TS2_voltage = 1200;		//TS2引脚电压mv
-	int16_t LD_voltage = 1200;		//LD引脚电压mv
-	int16_t CC1_current = (current*1000)/RSPN;		//CC1电流mA
-	int16_t Internal_Temp = 40;		//内部温度°C
-	uint8_t RST_SHUT_L_1s = 0;
-	uint8_t RST_SHUT_H_1s = 0;
+
+	int16_t CC1_current = (current*1000)/RSPN;//CC1电流mA
+	int16_t Internal_Temp = 40;	//内部温度°C
+	uint8_t RST_SHUT_h_1s;
 	uint8_t work_mode;
+	
+	if(!RST_SHUT)
+		RS_counter_h = 0;
+	else if(RST_SHUT == 1)
+		RS_counter_h ++;
+	if(RS_counter_h == RST_SHUT_1S)
+		RST_SHUT_h_1s = 1;
+	else
+		RST_SHUT_h_1s = 0;
+
 	BQ76852_work_mode(
 				//input signal
-				CellVoltage,		//VC1-16 mv		
-				PACK_voltage,				
-				TS2_voltage,				
-				LD_voltage,						
+				CellVoltage,		//VC1-16 mv	
+				BAT_Pin,
+				PACK_Pin,				
+				TS2,				
+				LD_Pin,						
 				current,			//RSP-RSN mv					
 				CC1_current,				
-				Internal_Temp,				
-				RST_SHUT_L_1s,		//RST_SHUT拉低1s
-				RST_SHUT_H_1s,		//RST_SHUT拉高1s
+				Internal_Temp,
+				RST_SHUT,
+				RST_SHUT_h_1s,		//RST_SHUT拉高1s
 				//output
 				&work_mode
 				);
 	printf("work_mode = %d\n",work_mode);
-	
+
+	if(work_mode == 1 || work_mode == 2)
+	{
     CUV_protect(
 				//input
 				CellVoltage,		//VC1-VC16
@@ -1001,8 +1020,6 @@ void BQ76952
 				&OCD2_alert,
 				&OCD2_error
 				);
-	
-	//int16_t CC1_current = -10;		//CC1读数结果,用于OCD3判断
 	OCD3_protect(
 				//input
 				CC1_current,
@@ -1029,7 +1046,7 @@ void BQ76952
 				&OCDL_alert,
 				&OCDL_error
 				);
-	
+
 	int16_t Stack_Pack_Delta = 10;	//用于OCC的电压恢复机制（阈值OCC_VREC_Delta）
 	OCC_protect(
 				//input
@@ -1045,8 +1062,6 @@ void BQ76952
 				&OCC_alert,
 				&OCC_error
 				);
-	
-	//int16_t Internal_Temp = 40;		//内部温度测量值
 	InternT_protect(
 				//input
 				Internal_Temp,
@@ -1159,8 +1174,8 @@ void BQ76952
 				&LVL2_alert,
 				&LVL2_error
 				);
-	
-	uint8_t LD_Stack_Delta = 10;	//用于PDSG基于电压关闭机制（阈值PDSG_StopDelta）
+
+	uint8_t LD_Stack_Delta = LD_Pin - BAT_Pin;	//用于PDSG基于电压关闭机制（阈值PDSG_StopDelta）
 	FET_auto_control(
 				//input
 				CellVoltage,
@@ -1203,7 +1218,23 @@ void BQ76952
 				&PCHG_ON,
 				&PDSG_ON
 				);
-	
+	}
+	else if(work_mode == 3 || work_mode == 4)
+	{
+		//禁用FETs
+		CHG_ON = 0;
+		DSG_ON = 0;
+		PCHG_ON = 0;
+		PDSG_ON = 0;
+		//关机模式下，寄存器会清零
+		if(work_mode == 4)
+		{
+			for(int i=0;i<SIZE_OF_DIRECT;i++)
+			{
+				mm.DirectMemory[i].data = 0;
+			}
+		}
+	}
     update_register(
 				//input
 				//电池电压
