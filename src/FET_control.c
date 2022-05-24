@@ -148,15 +148,15 @@ void FET_auto_control
 		uint16_t min_Vcell = *CellVoltage;
 	    for(int i=1;i<16;i++)
 	    {
+			CellVoltage ++;
 	        if(*CellVoltage < min_Vcell)
 	            min_Vcell = *CellVoltage;
-	        CellVoltage ++;
 	    }
 		if(PTOS_error && (CHG_PTO & CHG_protectionC))
 			PCHG_ctrl = 0;
-		else if(min_Vcell < PCHG_startvoltage)
+		else if(min_Vcell <= PCHG_startvoltage)
 			PCHG_ctrl = 1;
-		else if(PCHG_ctrl == 1 && min_Vcell >= PCHG_stopvoltage)
+		else if(PCHG_ctrl == 1 && min_Vcell > PCHG_stopvoltage)
 			PCHG_ctrl = 0;
 
 		//PDSG_ctrl
@@ -215,22 +215,26 @@ void PTO_protect(
 	else
 	{
 		if(PCHG_on && (CC1_current < PTO_charge_th))
+		{
 			alert = 1;
+			printf("\nAlert:PTOS\n");
+		}
 		else
 			alert = 0;
 		
-		if(current < dsg_current_th && CC1_current >= PTO_reset)//这里用的CC1电流,实际应该换算成电荷量再比较
-			PTO_counter = 0;
+		if(current < -dsg_current_th && CC1_current >= PTO_reset)//这里用的CC1电流,实际应该换算成电荷量再比较
+			PTO_counter = 0;//复位计数
 		else if(alert == 1)
-			PTO_counter = PTO_counter;
-		else if(PTO_counter == PTO_delay)//计满清零，触发PTO故障
+			PTO_counter = PTO_counter;//暂停计数
+		else if(PTO_counter == PTO_delay)//计满触发PTO故障
 		{
 			pto_error = 1;
-			PTO_counter = 0;
+			printf("\nError:PTOS\n");
+			PTO_counter = 0;//清零计数
 		}
 		else if(PCHG_on && (CC1_current > PTO_charge_th))//预充电模式开启且CC1电流超过阈值
 			PTO_counter ++;
-
+		//printf("%d\n",PTO_counter);
 		//pto_error只有主机命令可以清除
 	}
 	

@@ -704,8 +704,8 @@ void TermistorT_protect
 	
 	int16_t cell_temp[4] = {0};						//TS1,TS2,TS3,Internal_Temp
 	uint8_t cell_temp_f[4] = {0};
-	int16_t fet_temp[3] = {0};						//TS1,TS2,TS3,Internal_Temp
-	uint8_t fet_temp_f[3] = {0};
+	int16_t fet_temp[4] = {0};						//TS1,TS2,TS3,Internal_Temp
+	uint8_t fet_temp_f[4] = {0};
 	uint8_t TS1_pullup,TS2_pullup,TS3_pullup;		//热敏电阻上拉类型（18k/180k）
 	uint8_t TS1_poly,TS2_poly,TS3_poly;				//热敏电阻多项式类型（18k/180k）
 	uint8_t TS1_type,TS2_type,TS3_type;				//热敏电阻温度复用
@@ -722,7 +722,7 @@ void TermistorT_protect
 	TS3_poly = (TS_OPT_POLY & TS3_config) >> 4;		//Settings:Configuration:TS3 Config[5:4]
 	TS3_type = (TS_OPT_TYPE & TS3_config) >> 2;		//Settings:Configuration:TS3 Config[3:2]
 	TS3_func = TS_OPT_FUNC & TS3_config;			//Settings:Configuration:TS3 Config[1:0]
-
+	
 	if(TS1_func == 0x03 && TS1_type == 0x01)//电池温度
 	{
 		cell_temp[0] = TS1;//实际上TS1寄存器存储的是电阻值，此处应进行电阻值和温度值的转换
@@ -742,7 +742,7 @@ void TermistorT_protect
 		fet_temp[0] = 0;
 		fet_temp_f[0] = 0;
 	}
-	
+
 	if(TS2_func == 0x03 && TS2_type == 0x01)//电池温度
 	{
 		cell_temp[1] = TS2;
@@ -762,7 +762,7 @@ void TermistorT_protect
 		fet_temp[1] = 0;
 		fet_temp_f[1] = 0;
 	}
-	
+
 	if(TS3_func == 0x03 && TS3_type == 0x01)//电池温度
 	{
 		cell_temp[2] = TS3;
@@ -802,7 +802,7 @@ void TermistorT_protect
 		fet_temp[3] = 0;
 		fet_temp_f[3] = 0;
 	}
-	
+
 	//min_cell_temp
 	int16_t min_cell_temp = 0x7fff;
 	for(int i=0;i<4;i++)
@@ -810,6 +810,7 @@ void TermistorT_protect
 		if((cell_temp_f[i] == 1) && (cell_temp[i] < min_cell_temp))
 			min_cell_temp = cell_temp[i];	
 	}
+
 	//max_cell_temp
 	int16_t max_cell_temp = 0x8000;
 	for(int i=0;i<4;i++)
@@ -817,9 +818,10 @@ void TermistorT_protect
 		if((cell_temp_f[i] == 1) && (cell_temp[i] > max_cell_temp))
 			max_cell_temp = cell_temp[i];
 	}
+	
 	//max_fet_temp
 	int16_t max_fet_temp = 0x8000;
-	for(int i=0;i<3;i++)
+	for(int i=0;i<4;i++)
 	{
 		if((fet_temp_f[i] == 1) && (fet_temp[i] > max_fet_temp))
 			max_fet_temp = fet_temp[i];		

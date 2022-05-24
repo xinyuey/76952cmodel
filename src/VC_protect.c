@@ -39,6 +39,7 @@ uint8_t CUV_Comp(const uint16_t *CellVoltage,uint16_t threshold)
             min_Vcell = *CellVoltage;
         CellVoltage ++;
     }
+	
     if(min_Vcell <= threshold)
         return 1;
     else

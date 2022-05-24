@@ -1,11 +1,12 @@
 #include "common.h"
 
-#define RSPN 200	//敏感电阻阻值 单位毫欧
+
 #define RST_SHUT_1S 10
 
 int input_counter = 0;                          //用于输入向量的计数
 
 int RS_counter_h = 0;
+int init_memory_success = 0;
 
 void BQ76952_Vcell
 (					FILE* file,
@@ -18,13 +19,15 @@ void BQ76952_Vcell
 					int32_t *LD_Pin,
 					int16_t *TS1,
 					int16_t *TS2,
-					int16_t *TS3)
+					int16_t *TS3,
+					uint8_t *RST_SHUT)
 {
 	uint16_t VC[16];
 	int16_t current_temp;
 	uint16_t charger_temp,LD_temp;
 	int32_t BAT_temp,PACK_temp,LD_p_temp;
 	int16_t TS1_temp,TS2_temp,TS3_temp;
+	uint8_t RST_SHUT_temp;
 	
     for(int i=0;i<16;i++)
     {
@@ -44,6 +47,7 @@ void BQ76952_Vcell
 	fscanf(file,"%hd",&TS1_temp);
 	fscanf(file,"%hd",&TS2_temp);
 	fscanf(file,"%hd",&TS3_temp);
+	fscanf(file,"%hu",&RST_SHUT_temp);
 	*current = current_temp;
 	*charger = charger_temp;
 	*LD = LD_temp;
@@ -53,7 +57,7 @@ void BQ76952_Vcell
 	*TS1 = TS1_temp;
 	*TS2 = TS2_temp;
 	*TS3 = TS3_temp;
-	
+	*RST_SHUT = RST_SHUT_temp;
 
 }
 
@@ -87,6 +91,7 @@ int main()
 	int16_t  current;                               //电流结果输入
 	int16_t TS1,TS2,TS3;
 	int32_t BAT_Pin,PACK_Pin,LD_Pin;
+	uint8_t RST_SHUT;
 	uint8_t CHG_ON,DSG_ON,PCHG_ON,PDSG_ON;
 	uint8_t FUSE = 0;
 	uint8_t ALERT;
@@ -113,8 +118,26 @@ int main()
 		cycle_counter++;
 		printf("\n#%d\n",cycle_counter);
 		
-		BQ76952_Vcell(fp,&CellVoltage,&current,&charger,&LD,&BAT_Pin,&PACK_Pin,&LD_Pin,&TS1,&TS2,&TS3);  //Supply to VC1-VC16
-        BQ76952(&CellVoltage,current,charger,LD,BAT_Pin,PACK_Pin,LD_Pin,TS1,TS2,TS3,&CHG_ON,&DSG_ON,&PCHG_ON,&PDSG_ON,&FUSE,&ALERT);//DUT_BQ76952
+		BQ76952_Vcell(fp,&CellVoltage,&current,&charger,&LD,&BAT_Pin,&PACK_Pin,&LD_Pin,&TS1,&TS2,&TS3,&RST_SHUT);  //Supply to VC1-VC16
+        //BQ76952(&CellVoltage,current,charger,LD,BAT_Pin,PACK_Pin,LD_Pin,TS1,TS2,TS3,RST_SHUT,&CHG_ON,&DSG_ON,&PCHG_ON,&PDSG_ON,&FUSE,&ALERT);//DUT_BQ76952
+		BQ76952(CellVoltage[0],
+				CellVoltage[1],
+				CellVoltage[2],
+				CellVoltage[3],
+				CellVoltage[4],
+				CellVoltage[5],
+				CellVoltage[6],
+				CellVoltage[7],
+				CellVoltage[8],
+				CellVoltage[9],
+				CellVoltage[10],
+				CellVoltage[11],
+				CellVoltage[12],
+				CellVoltage[13],
+				CellVoltage[14],
+				CellVoltage[15],
+				current,charger,LD,BAT_Pin,PACK_Pin,LD_Pin,TS1,TS2,TS3,RST_SHUT,&CHG_ON,&DSG_ON,&PCHG_ON,&PDSG_ON,&FUSE,&ALERT);//DUT_BQ769
+				
 		printf("\nCHG_ON = %d\n",CHG_ON);
 		printf("DSG_ON = %d\n",DSG_ON);
 		printf("PCHG_ON = %d\n",PCHG_ON);
@@ -309,18 +332,18 @@ void update_config
 	*SCDL_RecoveryTime = 150;                 //实际 s 级别延时 Settings:Protection:Protection Configuration[SCDL_CURR_RECOV] 有效时该恢复机制才会起作用
 	*SCDL_REC_TH = -10;                       //mV单位  原始寄存器单位为mA注意连接时单位
 	
-	uint16_t Protection_Configuration = 0x0002;								//#define ProtectionConfiguration 0x925F 
+	uint16_t Protection_Configuration = 0x0600;								//#define ProtectionConfiguration 0x925F 
 	*SCDL_CURR_RECOV = Protection_Configuration & (1<<10);                	//Protection_Configuration & (1<<10)    是否使能SCDL 基于电流恢复
 	*OCDL_CURR_RECOV = Protection_Configuration & (1<<9);                //Protection_Configuration & (1<<9)    是否使能OCDL 基于电流恢复
 
 	*OCD1_EN = 1;
-	*OCD1_TH = 100;                           //单位2mv
+	*OCD1_TH = 100;                           //单位1mv
 	*OCD1_DLY = 2;                            //实际延时 ms 级别
 	*OCD2_EN = 1;
-	*OCD2_TH = 200;                           //单位2mv
+	*OCD2_TH = 200;                           //单位1mv
 	*OCD2_DLY = 2;                            //实际延时 ms 级别
 	*OCD3_EN = 1;
-	*OCD3_TH = -100;                          //基于CC1读数结果,单位userA(可配置)
+	*OCD3_TH = -4000;                          //基于CC1读数结果,单位mA(可配置)，即-800mv
 	*OCD3_DLY = 2;                            //实际延时 s 级别
 	*OCD_REC_TH = -10;                        //mV单位  原始寄存器单位为mA注意连接时单位
 
@@ -331,21 +354,21 @@ void update_config
 	*OCDL_REC_TH = -10;                       //mV单位  原始寄存器单位为mA注意连接时单位
 
 	*OCC_EN = 1;
-	*OCC_TH = 100;                              //mV
+	*OCC_TH = 100;                              //单位1mV
 	*OCC_DLY = 2;                             //实际延时 ms 级别
-	*OCC_CREC_TH = 1;                         // mV单位  原始寄存器单位为mA注意连接时单位
-	*OCC_VREC_Delta = 200;                    // 10mV单位
+	*OCC_CREC_TH = 1;                         // 单位1mV  原始寄存器单位为mA注意连接时单位
+	*OCC_VREC_Delta = 200;                    // 单位10mV
 
 	*PTO_EN = 1;
-	*PTO_DLY = 1800;
-	*PTO_Charge_TH = 250;
-	*PTO_RESET = 2;
+	*PTO_DLY = 100;//触发PTOS故障延时
+	*PTO_Charge_TH = 250;//PCHG开启时，若CC1电流小于该阈值，PTOS警报；PCHG开启时，若CC1电流大于该阈值一段延时，PTOS故障
+	*PTO_RESET = 2;//若电流幅值超过放电电流阈值，且电荷积分超过此阈值，则PTO内置计时器复位
 
-	*DSG_Current_TH = 100;
+	*DSG_Current_TH = 100;//放电电流阈值（幅值）
 	
-	*TS1_Config = 0x07; 
+	*TS1_Config = 0x07; //0x07作电池温度保护、0x0b仅测量温度，不作温度保护；0x0f作fet温度保护 
 	*TS2_Config = 0x00;
-	*TS3_Config = 0x00;
+	*TS3_Config = 0x0f;
 	*TINT_EN = 0;							
 	*TINT_FETT = 0;	
 	*OTC_EN = 1;
@@ -377,16 +400,16 @@ void update_config
 	*UTINT_DLY = 2;
 	*UTINT_REC_TH = -15;
 
-	*PF_EN = 1;
-	*PF_FETS = 0;
-	*PF_FUSE = 1;
-	*PF_DPSLP = 0;
-	*PF_REGS = 1;
+	*PF_EN = 1;//Settings:Manufacturing:Mfg Status Init[PF_EN]
+	*PF_FETS = 0;//发生二次保护，禁用FET使能开关,Settings:Protection:ProtectionConfiguration[PF_FETS]
+	*PF_FUSE = 1;//发生二次保护，断言FUSE使能开关,Settings:Protection:ProtectionConfiguration[PF_FUSE]
+	*PF_DPSLP = 0;//发生二次保护，进入深度睡眠使能开关,Settings:Protection:ProtectionConfiguration[PF_DPSLP]
+	*PF_REGS = 1;//Settings:Protection:ProtectionConfiguration[PF_REGS]
 	*SOV_EN = 1;
-	*SOV_TH = 4500;
+	*SOV_TH = 6000;
 	*SOV_DLY = 5;
 	*SUV_EN = 1;
-	*SUV_TH = 2200;
+	*SUV_TH = 2000;
 	*SUV_DLY = 5;
 	*LVL2_EN = 1;
 	*LVL2_DLY = 5;
@@ -559,7 +582,6 @@ void update_register
 	alarmstatus = alarmrawstatus & alarmenable;
 	writeDirectMemory(alarmrawstatus, AlarmRawStatus);
 	writeDirectMemory(alarmstatus, AlarmStatus);
-	
 	if(alarmstatus)
 		*Alert_Latch = 1;
 	else
@@ -569,7 +591,22 @@ void update_register
 void BQ76952
 (
 				//input
-                const uint16_t *CellVoltage,  	//16节电池差分电压                 
+                const uint16_t VC1,  	//16节电池差分电压   
+				const uint16_t VC2,  	//16节电池差分电压 
+				const uint16_t VC3,
+				const uint16_t VC4,
+				const uint16_t VC5,
+				const uint16_t VC6,
+				const uint16_t VC7,
+				const uint16_t VC8,
+				const uint16_t VC9,
+				const uint16_t VC10,
+				const uint16_t VC11,
+				const uint16_t VC12,
+				const uint16_t VC13,
+				const uint16_t VC14,
+				const uint16_t VC15,
+				const uint16_t VC16,
                 const int16_t current,        	//敏感电阻差分电压
                 const uint16_t charger,       	//充电器检测结果
 				const uint16_t LD,				//负载检测结果
@@ -579,11 +616,7 @@ void BQ76952
                 const int16_t TS1,             	//TS1热敏电阻端温度(CELL)
                 const int16_t TS2,             	//TS2引脚电压(WAKEON)
                 const int16_t TS3,				//TS3热敏电阻温度(FET)
-                const uint8_t RST_SHUT,
-                //RST_SHUT Pin电压
-                //DCHG Pin电压    
-                //DDSG Pin电压   
-                
+                const uint8_t RST_SHUT,  
 				//output
                 uint8_t *CHG_on,
                 uint8_t *DSG_on,               
@@ -777,6 +810,33 @@ void BQ76952
 	uint8_t DSG_ON;
 	uint8_t PCHG_ON;
 	uint8_t PDSG_ON;
+	
+	//初始化存储区域
+	if(!init_memory_success)//仅一次
+	{
+		initMemory();
+		init_memory_success = 1;
+	}
+
+	//定义电池电压数组VC[16]、指向该数组指针CellVotage，便于后面传参
+	uint16_t VC[16];
+	VC[0] = VC1;
+	VC[1] = VC2;
+	VC[2] = VC3;
+	VC[3] = VC4;
+	VC[4] = VC5;
+	VC[5] = VC6;
+	VC[6] = VC7;
+	VC[7] = VC8;
+	VC[8] = VC9;
+	VC[9] = VC10;
+	VC[10] = VC11;
+	VC[11] = VC12;
+	VC[12] = VC13;
+	VC[13] = VC14;
+	VC[14] = VC15;
+	VC[15] = VC16;
+	uint16_t *CellVoltage = VC;
 
 	update_config(
 				//output
@@ -796,7 +856,7 @@ void BQ76952
 				&PDSG_Timeout,
 				&PDSG_StopDelta,
 				//电压保护
-				&COV_EN,
+				&CUV_EN,
 				&COV_EN,
 				&COVL_EN,
 				&CUV_TH,
@@ -934,8 +994,8 @@ void BQ76952
 				//output
 				&work_mode
 				);
-	printf("work_mode = %d\n",work_mode);
-
+	//printf("work_mode = %d\n",work_mode);
+	
 	if(work_mode == 1 || work_mode == 2)
 	{
     CUV_protect(
@@ -949,7 +1009,6 @@ void BQ76952
 				//output
 				&CUV_alert,			//alert信号
 				&CUV_error);		//error信号
-
     COV_protect(
 				//input
 				CellVoltage,		//VC1-VC16
@@ -1047,7 +1106,7 @@ void BQ76952
 				&OCDL_error
 				);
 
-	int16_t Stack_Pack_Delta = 10;	//用于OCC的电压恢复机制（阈值OCC_VREC_Delta）
+	int16_t Stack_Pack_Delta = 1000;	//用于OCC的电压恢复机制（阈值OCC_VREC_Delta）,单位1mv
 	OCC_protect(
 				//input
 				current,
@@ -1062,6 +1121,7 @@ void BQ76952
 				&OCC_alert,
 				&OCC_error
 				);
+	//Internal_Temp = 90;
 	InternT_protect(
 				//input
 				Internal_Temp,
@@ -1163,7 +1223,7 @@ void BQ76952
                 &SUV_error   
 				);
 	fuse_ctrl = PF_FUSE & (SOV_error | SUV_error);
-	fuse_in = (*FUSE) & (!fuse_ctrl);
+	fuse_in = *FUSE & (!fuse_ctrl);//fuse_ctrl有效，fuse_in无效；fuse_ctrl无效时，fuse_in被置为FUSE引脚外部输入
 	LVL2_protect(
 				//input
 				fuse_in,
@@ -1301,7 +1361,7 @@ void BQ76952
 			   	//output
 			   	&alert_ctrl
 				);
-	
+
 	*CHG_on = CHG_ON;
 	*DSG_on = DSG_ON;
 	*PCHG_on = PCHG_ON;

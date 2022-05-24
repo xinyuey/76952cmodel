@@ -531,14 +531,14 @@ void OCD3_protect
 	        case TRIP:
 				alert = 0;
 				error = 1;
-	            if (OCD3_recounter == recoverytime - 1 && OC_Comp(CC1_current,OCD_rec_th))
+	            if (OCD3_recounter == recoverytime - 1 && OC_Comp(CC1_current,(OCD_rec_th*1000)/RSPN))//mv单位转换成mA
 	            {
 	                OCD3_recounter = 0;
 	                OCDL_DEC_counter = 0;
 	                OCD3_State = NORMAL;
 					printf("\nRecovery: OCD3\n");
 	            }   
-	            else if(OC_Comp(CC1_current,OCD_rec_th))
+	            else if(OC_Comp(CC1_current,(OCD_rec_th*1000)/RSPN))//mv单位转换成mA
 	            {
 	                OCD3_recounter ++;
 	            }
@@ -725,14 +725,14 @@ void OCC_protect
 	                OCC_CREC_recounter = 0;
 	            }
 
-	            if(OCC_VREC_recounter == recoverytime-1 && (stack_pack_delta >= OCC_vrec_delta) )   //基于pack-stack电压恢复
+	            if(OCC_VREC_recounter == recoverytime-1 && (stack_pack_delta >= OCC_vrec_delta*10) )   //基于pack-stack电压恢复
 	            {
 	                OCC_VREC_recounter = 0;
 	                OCC_State = NORMAL;
 					printf("\nRecovery: OCC from Stack-Pack voltage\n");
 	                break;
 	            }
-	            else if(stack_pack_delta >= OCC_vrec_delta)
+	            else if(stack_pack_delta >= OCC_vrec_delta*10)
 	            {
 	                OCC_VREC_recounter ++;
 	            }
