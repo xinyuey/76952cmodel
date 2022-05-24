@@ -8,6 +8,7 @@
 
 #include "BQ769x2Header.h"
 
+#define RSPN 200	//敏感电阻阻值 单位毫欧
 #define BIT(n) 1 << n
 
 typedef unsigned char       uint8_t;    	//1 byte

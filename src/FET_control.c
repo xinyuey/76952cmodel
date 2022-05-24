@@ -114,13 +114,19 @@ void FET_auto_control
 		//CHG_ctrl
 		//Settings:Protection:CHG FET Protections A
 		if((COV_error && (CHG_COV & CHG_protectionA)) | (OCC_error && (CHG_OCC & CHG_protectionA)) | (SCD_error && (CHG_SCD & CHG_protectionA)))
- 			CHG_ctrl = 0;
+		{
+			CHG_ctrl = 0;
+		}
 		//Settings:Protection:CHG FET Protections B
 		else if((UTC_error && (CHG_UTC & CHG_protectionB)) | (OTC_error && (CHG_OTC & CHG_protectionB)) | (OTF_error && (CHG_OTF & CHG_protectionB)) | (UTINT_error && (CHG_UTINT & CHG_protectionB)) | (OTINT_error && (CHG_OTINT & CHG_protectionB)))
+		{
 			CHG_ctrl = 0;
+		}
 		//Settings:Protection:CHG FET Protections C
 		else if((PTOS_error && (CHG_PTO & CHG_protectionC)) | (COVL_error && (CHG_COVL & CHG_protectionC)) | (SCDL_error && (CHG_SCDL & CHG_protectionC)))
+		{
 			CHG_ctrl = 0;
+		}
 		else
 			CHG_ctrl = 1;
 		
@@ -142,15 +148,15 @@ void FET_auto_control
 		uint16_t min_Vcell = *CellVoltage;
 	    for(int i=1;i<16;i++)
 	    {
+			CellVoltage ++;
 	        if(*CellVoltage < min_Vcell)
 	            min_Vcell = *CellVoltage;
-	        CellVoltage ++;
 	    }
 		if(PTOS_error && (CHG_PTO & CHG_protectionC))
 			PCHG_ctrl = 0;
-		else if(min_Vcell < PCHG_startvoltage)
+		else if(min_Vcell <= PCHG_startvoltage)
 			PCHG_ctrl = 1;
-		else if(PCHG_ctrl == 1 && min_Vcell >= PCHG_stopvoltage)
+		else if(PCHG_ctrl == 1 && min_Vcell > PCHG_stopvoltage)
 			PCHG_ctrl = 0;
 
 		//PDSG_ctrl
@@ -171,7 +177,7 @@ void FET_auto_control
 	}
 	else//完全手动控制FETs(FET_TEST模式)
 		return;
-	
+
 	*CHG_ON = CHG_ctrl;
 	*PCHG_ON = PCHG_ctrl;
 	*PDSG_ON = PDSG_ctrl;
@@ -189,6 +195,7 @@ void PTO_protect(
 			const int16_t CC1_current,
 			const int16_t current,
 			const uint8_t PCHG_on,
+			const uint8_t PTO_en,
 			const uint16_t PTO_delay,
 			const int16_t PTO_charge_th,
 			const int16_t dsg_current_th,
@@ -199,24 +206,38 @@ void PTO_protect(
 		   )
 {
 	uint8_t alert;
-	if(PCHG_on && (CC1_current < PTO_charge_th))
-		alert = 1;
-	else
-		alert = 0;
-	
-	if(current < dsg_current_th && CC1_current >= PTO_reset)//这里用的CC1电流,实际应该换算成电荷量再比较
-		PTO_counter = 0;
-	else if(alert == 1)
-		PTO_counter = PTO_counter;
-	else if(PTO_counter == PTO_delay)//计满清零，触发PTO故障
+	if(!PTO_en)
 	{
-		pto_error = 1;
+		alert = 0;
+		pto_error = 0;
 		PTO_counter = 0;
 	}
-	else if(PCHG_on && (CC1_current > PTO_charge_th))//预充电模式开启且CC1电流超过阈值
-		PTO_counter ++;
-
-	//pto_error只有主机命令可以清除
+	else
+	{
+		if(PCHG_on && (CC1_current < PTO_charge_th))
+		{
+			alert = 1;
+			printf("\nAlert:PTOS\n");
+		}
+		else
+			alert = 0;
+		
+		if(current < -dsg_current_th && CC1_current >= PTO_reset)//这里用的CC1电流,实际应该换算成电荷量再比较
+			PTO_counter = 0;//复位计数
+		else if(alert == 1)
+			PTO_counter = PTO_counter;//暂停计数
+		else if(PTO_counter == PTO_delay)//计满触发PTO故障
+		{
+			pto_error = 1;
+			printf("\nError:PTOS\n");
+			PTO_counter = 0;//清零计数
+		}
+		else if(PCHG_on && (CC1_current > PTO_charge_th))//预充电模式开启且CC1电流超过阈值
+			PTO_counter ++;
+		//printf("%d\n",PTO_counter);
+		//pto_error只有主机命令可以清除
+	}
+	
 	*PTOS_error = pto_error;
 	*PTOS_alert = alert;
 }

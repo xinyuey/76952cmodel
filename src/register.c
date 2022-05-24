@@ -7,12 +7,13 @@ int initMemory()
 {
     //读取外部配置文件，初始化直接寄存器
     FILE *fp;
-    fp = fopen("../sim/InitMemory.txt","r");
+    //fp = fopen("./InitMemory.txt","r");
+	fp = fopen("../sim/InitMemory.txt","r");
     if(fp==NULL)
     {  
 		printf("File cannot open!\n" );  
 		//exit;  
-		return 0;
+		return -1;
 	}
     else
         printf("***** DirectMemory initialization begin *****\n" );   
@@ -21,7 +22,7 @@ int initMemory()
     {
         fscanf(fp,"%s %x",&mm.DirectMemory[i].name,&mm.DirectMemory[i].addr);
         mm.DirectMemory[i].data = 0;
-        printf("%-30s\t%#x\n", mm.DirectMemory[i].name,mm.DirectMemory[i].addr); 
+        //printf("%-30s\t%#x\n", mm.DirectMemory[i].name,mm.DirectMemory[i].addr); 
     }
 		//printf("SIZE_OF_DIRECT = %d\n",SIZE_OF_DIRECT);
         printf("***** DirectMemory initialization completed *****\n\n" ); 
@@ -30,12 +31,13 @@ int initMemory()
 
 	//读取外部配置文件，初始化间接数据寄存器
 	FILE *fp1;
+	//fp1 = fopen("./InitDataSubMemory.txt","r");
 	fp1 = fopen("../sim/InitDataSubMemory.txt","r");
     if(fp1==NULL)
     {  
 		printf("File cannot open!\n" );  
 		//exit;  
-		return 0;
+		return -1;
 	}
     else
         printf("***** DataSubMemory initialization begin *****\n" );   
@@ -45,7 +47,7 @@ int initMemory()
         fscanf(fp1,"%s%x%d",&mm.DataSubMemory[i].name,&mm.DataSubMemory[i].addr,&mm.DataSubMemory[i].data_length);
         memset(mm.DataSubMemory[i].data,0,SIZE_OF_DATA_BUFFER);
 		
-        printf("%-30s\t%#x\t%d\n", mm.DataSubMemory[i].name,mm.DataSubMemory[i].addr,mm.DataSubMemory[i].data_length); 
+        //printf("%-30s\t%#x\t%d\n", mm.DataSubMemory[i].name,mm.DataSubMemory[i].addr,mm.DataSubMemory[i].data_length); 
     }
         printf("***** DataSubMemory initialization completed *****\n\n" ); 
 	
@@ -53,12 +55,13 @@ int initMemory()
 
 	//读取外部配置文件，初始化间接命令寄存器
 	FILE *fp2;
-	fp2 = fopen("../sim/InitComSubMemory.txt","r");
+	//fp2 = fopen("./InitComSubMemory.txt","r");
+	fp2 = fopen("../sim//InitComSubMemory.txt","r");
     if(fp2==NULL)
     {  
 		printf("File cannot open!\n" );  
 		//exit;  
-		return 0;
+		return -1;
 	}
     else
         printf("***** ComSubMemory initialization begin *****\n" );   
@@ -66,19 +69,20 @@ int initMemory()
     for(int i=0;i<SIZE_OF_COMSUB;i++)
     {
         fscanf(fp2,"%s %x",&mm.ComSubMemory[i].name,&mm.ComSubMemory[i].addr);
-        printf("%-30s\t%#x\n", mm.ComSubMemory[i].name,mm.ComSubMemory[i].addr); 
+        //printf("%-30s\t%#x\n", mm.ComSubMemory[i].name,mm.ComSubMemory[i].addr); 
     }
         printf("***** ComSubMemory initialization completed *****\n\n" ); 
 	
     fclose(fp2);
 	//读取外部配置文件，初始化配置寄存器
 	FILE *fp3;
+	//fp3 = fopen("./InitDataMemorySettings.txt","r");
 	fp3 = fopen("../sim/InitDataMemorySettings.txt","r");
     if(fp3==NULL)
     {  
 		printf("File cannot open!\n" );  
 		//exit;  
-		return 0;
+		return -1;
 	}
     else
         printf("***** DataMemorySettings initialization begin *****\n" );   
@@ -88,7 +92,7 @@ int initMemory()
         fscanf(fp1,"%s%x%d",&mm.Data_Memory_Settings[i].name,&mm.Data_Memory_Settings[i].addr,&mm.Data_Memory_Settings[i].data_length);
         memset(mm.Data_Memory_Settings[i].data,0,SIZE_OF_DATA_BUFFER);
 		
-        printf("%-30s\t%#x\t%d\n", mm.Data_Memory_Settings[i].name,mm.Data_Memory_Settings[i].addr,mm.Data_Memory_Settings[i].data_length); 
+        //printf("%-30s\t%#x\t%d\n", mm.Data_Memory_Settings[i].name,mm.Data_Memory_Settings[i].addr,mm.Data_Memory_Settings[i].data_length); 
     }
         printf("***** DataMemorySettings initialization completed *****\n\n" ); 
 	
@@ -142,7 +146,7 @@ uint16_t readDirectMemory(uint8_t addr)
 		printf("Error: the address %#x cant't match one command!\n",addr);
 	    return 0;
 	}
-    printf("%#x %s = %#x\n",addr,mm.DirectMemory[info].name,mm.DirectMemory[info].data);
+    //printf("%#x %s = %#x\n",addr,mm.DirectMemory[info].name,mm.DirectMemory[info].data);
     return mm.DirectMemory[info].data;
 }
 
