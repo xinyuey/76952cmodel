@@ -95,12 +95,13 @@ int main()
 	uint8_t CHG_ON,DSG_ON,PCHG_ON,PDSG_ON;
 	uint8_t FUSE = 0;
 	uint8_t ALERT;
+	uint16_t BALANCE_CELL;
     FILE *fp;
     //fp = fopen("../sim/COV_COVL_TEST.txt","r");    //testcase自定义Vcell
     //fp = fopen("../sim/CUV_TEST.txt","r");
     //fp = fopen("../sim/SUPPLY_TEST.txt","r");
-    //fp = fopen("../sim/TEST_case.txt","r");
-	fp = fopen("../sim/testcase.txt","r");
+    fp = fopen("../sim/TEST_case.txt","r");
+	//fp = fopen("../sim/testcase.txt","r");
     if(fp==NULL)
     {  
 		printf("File cannot open! " );  
@@ -136,7 +137,7 @@ int main()
 				CellVoltage[13],
 				CellVoltage[14],
 				CellVoltage[15],
-				current,charger,LD,BAT_Pin,PACK_Pin,LD_Pin,TS1,TS2,TS3,RST_SHUT,&CHG_ON,&DSG_ON,&PCHG_ON,&PDSG_ON,&FUSE,&ALERT);//DUT_BQ769
+				current,charger,LD,BAT_Pin,PACK_Pin,LD_Pin,TS1,TS2,TS3,RST_SHUT,&CHG_ON,&DSG_ON,&PCHG_ON,&PDSG_ON,&FUSE,&ALERT,&BALANCE_CELL);//DUT_BQ769
 				
 		printf("\nCHG_ON = %d\n",CHG_ON);
 		printf("DSG_ON = %d\n",DSG_ON);
@@ -144,6 +145,7 @@ int main()
 		printf("PDSG_ON = %d\n",PDSG_ON);
 		printf("FUSE = %d\n",FUSE);
 		printf("ALERT = %d\n",ALERT);
+		printf("BALANCE_CELL= %04x\n",BALANCE_CELL);
     }
 //等待外部输入命令序列使用示例
 //	while(1)
@@ -623,7 +625,8 @@ void BQ76952
                 uint8_t *PCHG_on,               
                 uint8_t *PDSG_on,
                 uint8_t *FUSE,
-                uint8_t *Alert 
+                uint8_t *Alert,
+				uint16_t *BALANCE_CELL
 )
 {
 	uint8_t CUV_EN;
@@ -810,6 +813,30 @@ void BQ76952
 	uint8_t DSG_ON;
 	uint8_t PCHG_ON;
 	uint8_t PDSG_ON;
+	
+	
+	uint8_t Temp = 20;
+	uint8_t Safety_AlertA  = 0x00;
+	uint8_t Safety_StatusA = 0x00;
+	uint16_t CB_ACTIVE_CELLS_bal = 0x0000;
+	uint16_t CB_SET_LVL_bal      = 0x0000;
+
+	//均衡相關内存信息
+	uint16_t Cell_active  = 0xffff;
+	uint8_t Balancing_Config = 0x00; 
+	int16_t CHG_th = 10;             
+	int16_t DSG_th = -10;            
+	int16_t Min_Cell_Temp = -20;     
+	int16_t Max_Cell_Temp = 70;      
+	int16_t CHG_MINV = 3600;         
+	int16_t CHG_delta = 200;         
+	int16_t CHG_stop_delta = 150;    
+	int16_t REX_MINV = 3600;         
+	int16_t REX_delta = 200;         
+	int16_t REX_stop_delta = 150;    
+	uint8_t Balance_Interval = 100;  
+	uint8_t Max_Cells = 3; 
+	int16_t BLANCE_TIME[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 	
 	//初始化存储区域
 	if(!init_memory_success)//仅一次
@@ -1278,6 +1305,34 @@ void BQ76952
 				&PCHG_ON,
 				&PDSG_ON
 				);
+	Balance_timing(
+				//input
+    			CellVoltage,
+    			current,
+    			// extern mode work_mode; 芯片工作状态
+    			Temp,    
+    			Safety_AlertA,
+    			Safety_StatusA,
+    			CB_ACTIVE_CELLS_bal,
+    			CB_SET_LVL_bal,
+    			Cell_active,
+    			Balancing_Config,
+    			CHG_th,   
+    			DSG_th,
+    			Min_Cell_Temp,
+    			Max_Cell_Temp, 
+    			CHG_MINV,
+    			CHG_delta,
+    			CHG_stop_delta,
+    			REX_MINV,
+    			REX_delta,
+    			REX_stop_delta,
+    			Balance_Interval,
+    			Max_Cells,
+
+    			//output
+    			&BLANCE_TIME,//单元均衡时间数组输出
+    			BALANCE_CELL);
 	}
 	else if(work_mode == 3 || work_mode == 4)
 	{

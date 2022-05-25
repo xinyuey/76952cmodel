@@ -36,7 +36,7 @@
 //------------------------------------------外部环境信息与工作状态信息输入-------------------------------------------//
 //----------------------------------------------------------------------------------------------------------------//
 
-#include "common.h"
+
 // extern uint16_t CellVoltage[];
 // extern int16_t  current;                        //充电为正，放电为负，单位mv
 // extern mode work_mode; 芯片工作状态
@@ -81,11 +81,7 @@
 //----------------------------------------------------模块内部信号与函数---------------------------------------------//
 //-----------------------------------------------------------------------------------------------------------------//
 
-uint8_t timer = 0;                       //均衡间隔计时器
-uint8_t adjacent_TH = 5;                 //奇偶单元均衡计时阈值
-uint8_t adjacent_timer = 0;
-
-
+#include "common.h"
 
 typedef enum{
         IDLE=1,
@@ -100,36 +96,41 @@ typedef enum{
 Balance_StateMachine Bal_state = IDLE;
 
 
-uint16_t VC_min(uint16_t *CellVoltage,uint16_t Cell_active)
+uint16_t VC_min(uint16_t *CellVoltage,const uint16_t Cell_active)
 {
     uint16_t min = *CellVoltage;
+    //printf("\n*****  cell_1 is %d   *****\n",min);
+    uint16_t *Cell_V;
+    Cell_V = CellVoltage;
     for (int i = 0; i < 16; i++)
     {
         if (Cell_active & (1 << i))
         {
-            if (*CellVoltage < min)
+            if (*Cell_V < min)
             {
-                min = *CellVoltage;
+                min = *Cell_V;
             }
         }
-        CellVoltage += 1;
+        Cell_V += 1;
     }
     return min;
 }
-uint16_t VC_max(uint16_t *CellVoltage,uint16_t Cell_active)
+uint16_t VC_max(uint16_t *CellVoltage,const uint16_t Cell_active)
 {
     uint16_t max = *CellVoltage;
+    uint16_t *Cell_V;
+    Cell_V = CellVoltage;
     for (int i = 0; i < 16; i++)
     {
         if (Cell_active & (1 << i))
         {
-            if (*CellVoltage > max)
+            if (*Cell_V > max)
             {
-                max = *CellVoltage;
+                max = *Cell_V;
             }
             
         }
-        CellVoltage += 1;
+        Cell_V += 1;
     }
     return max;
 }
@@ -152,7 +153,7 @@ uint16_t balance_AUTO(uint16_t *CellVoltage,int16_t TH)
     return balance_cell;
 }
 
-uint16_t balance_HOST(uint16_t *CellVoltage,uint16_t CB_ACTIVE_CELLS_bal,uint16_t CB_SET_LVL_bal)
+uint16_t balance_HOST(uint16_t *CellVoltage,const uint16_t CB_ACTIVE_CELLS_bal,const uint16_t CB_SET_LVL_bal)
 {
     uint16_t temp = 0x0000;
     if(CB_ACTIVE_CELLS_bal)
@@ -166,14 +167,14 @@ uint16_t balance_HOST(uint16_t *CellVoltage,uint16_t CB_ACTIVE_CELLS_bal,uint16_
     return temp;
 }
 
-uint16_t Balance_adjacent( uint16_t ACTIVE_CELL)
+uint16_t Balance_adjacent( const uint16_t ACTIVE_CELL)
 {
     uint16_t ODD_MASK = 0x0000;  //奇数均衡掩码
     uint16_t EVEN_MASK = 0x0000; //偶数均衡掩码
     uint16_t mask_counter = 0;
     for (int i = 0 ; i < 16; i++)
     {
-        if (ACTIVE_CELL & 0x0001)
+        if (ACTIVE_CELL & (1<<i))
         {
             if (mask_counter % 2 == 0)
             {
@@ -185,7 +186,6 @@ uint16_t Balance_adjacent( uint16_t ACTIVE_CELL)
             }
             mask_counter++;
         }
-        ACTIVE_CELL = ACTIVE_CELL >> 1;
     }
     return ODD_MASK;
 }
@@ -287,7 +287,7 @@ uint16_t balance_time(uint16_t *BLANCE_TIME,uint16_t cb)
 }
 
 uint16_t Balance_V_check(
-    const uint16_t *CellVoltage,
+    uint16_t *CellVoltage,
     const int16_t current,
     const uint8_t Temp,    
     const uint8_t Safety_AlertA,
@@ -306,9 +306,10 @@ uint16_t Balance_V_check(
     const int16_t REX_MINV,
     const int16_t REX_delta,
     const int16_t REX_stop_delta,
-    const uint8_t Balance_Interval,
-)
+    const uint8_t Balance_Interval)
 {
+    static uint8_t timer = 0;                       //均衡间隔计时器
+
     uint16_t BALANCE_V;
     uint8_t REX = (current > DSG_th) && (current < CHG_th);             //当作逻辑变量使用
     uint8_t CHG = current >= CHG_th;                                    //当作逻辑变量使用
@@ -401,9 +402,10 @@ uint16_t Balance_V_check(
 //------------------------------------------------------主要功能函数-----------------------------------------------//
 //----------------------------------------------------------------------------------------------------------------//
 
-uint16_t Balance_timing(
-    const uint16_t *CellVoltage,
+void Balance_timing(
+    uint16_t *CellVoltage,
     const int16_t current,
+    // extern mode work_mode; 芯片工作状态
     const uint8_t Temp,    
     const uint8_t Safety_AlertA,
     const uint8_t Safety_StatusA,
@@ -426,9 +428,11 @@ uint16_t Balance_timing(
 
     //output
     uint16_t *BLANCE_TIME,//单元均衡时间数组输出
-    uint16_t *BALANCE_CELL,      
-    )
+    uint16_t *BALANCE_CELL)
 {
+    const  uint8_t adjacent_TH = 5;                 //奇偶单元均衡计时阈值
+    static uint8_t adjacent_timer = 0; 
+
     static uint16_t sum_time = 0;
     static uint16_t BALANCE_ODD;                    //奇數单元窗口检测
     static uint16_t BALANCE_EVEN;                   //偶數單元窗口檢測
@@ -457,15 +461,14 @@ uint16_t Balance_timing(
                                         REX_MINV,
                                         REX_delta,
                                         REX_stop_delta,
-                                        Balance_Interval,
-                                    );
+                                        Balance_Interval);
 
     //printf("\n*****  BALANCE_V_check is %04x  *****\n",BALANCE_V_check);
 
     if(adjacent_timer == 0)
     {
         BALANCE_adjacent = Balance_adjacent(Cell_active);
-        Balance_window(&BALANCE_ODD,&BALANCE_EVEN,BALANCE_V_check, Max_Cells,BALANCE_adjacent);   
+        Balance_window(&BALANCE_ODD,&BALANCE_EVEN,BALANCE_V_check, Max_Cells,BALANCE_adjacent,Cell_active);   
     }
 
     if (adjacent_timer < adjacent_TH)
@@ -489,9 +492,9 @@ uint16_t Balance_timing(
         adjacent_timer = 0;
     }
 
-    BALANCE_CELL = BALANCE_WINDOW & BALANCE_V_check;
+    *BALANCE_CELL = BALANCE_WINDOW & BALANCE_V_check;
 
-    sum_time = balance_time(BLANCE_TIME,BALANCE_CELL);
+    sum_time = balance_time(BLANCE_TIME,*BALANCE_CELL);
 
-    return BALANCE_CELL;
+    return;
 }
