@@ -290,7 +290,25 @@ void update_config
 			   	uint8_t *SF_ALERT_MASKA,
 			    uint8_t *SF_ALERT_MASKB,
 			   	uint8_t *SF_ALERT_MASKC,
-			   	uint8_t *PF_ALERT_MASKA
+			   	uint8_t *PF_ALERT_MASKA,
+
+				//均衡相關配置
+		        uint16_t *CB_ACTIVE_CELLS_bal,
+				uint16_t *CB_SET_LVL_bal,
+				uint16_t *Cell_active,
+				uint8_t *Balancing_Config,
+				int16_t *CHG_th,           
+				int16_t *DSG_th,            
+				int16_t *Min_Cell_Temp,     
+				int16_t *Max_Cell_Temp,      
+				int16_t *CHG_MINV,         
+				int16_t *CHG_delta,         
+				int16_t *CHG_stop_delta,    
+				int16_t *REX_MINV,         
+				int16_t *REX_delta,         
+				int16_t *REX_stop_delta,    
+				uint8_t *Balance_Interval,  
+				uint8_t *Max_Cells 
 )
 {
 	*CUV_EN = 1;
@@ -420,6 +438,24 @@ void update_config
    	*SF_ALERT_MASKB = 0xF7;
    	*SF_ALERT_MASKC = 0xF4;
    	*PF_ALERT_MASKA = 0x5F;
+	
+	//均衡相關内存信息
+	*CB_ACTIVE_CELLS_bal = 0x0000;
+	*CB_SET_LVL_bal      = 0x0000;
+	*Cell_active  = 0xffff;
+	*Balancing_Config = 0x00; 
+	*CHG_th = 10;             
+	*DSG_th = -10;            
+	*Min_Cell_Temp = -20;     
+	*Max_Cell_Temp = 70;      
+	*CHG_MINV = 3600;         
+	*CHG_delta = 200;         
+	*CHG_stop_delta = 150;    
+	*REX_MINV = 3600;         
+	*REX_delta = 200;         
+	*REX_stop_delta = 150;    
+	*Balance_Interval = 100;  
+	*Max_Cells = 3; 
 }
 void update_register
 (
@@ -814,29 +850,28 @@ void BQ76952
 	uint8_t PCHG_ON;
 	uint8_t PDSG_ON;
 	
-	
+	//均衡相關内存信息
 	uint8_t Temp = 20;
 	uint8_t Safety_AlertA  = 0x00;
 	uint8_t Safety_StatusA = 0x00;
-	uint16_t CB_ACTIVE_CELLS_bal = 0x0000;
-	uint16_t CB_SET_LVL_bal      = 0x0000;
 
-	//均衡相關内存信息
-	uint16_t Cell_active  = 0xffff;
-	uint8_t Balancing_Config = 0x00; 
-	int16_t CHG_th = 10;             
-	int16_t DSG_th = -10;            
-	int16_t Min_Cell_Temp = -20;     
-	int16_t Max_Cell_Temp = 70;      
-	int16_t CHG_MINV = 3600;         
-	int16_t CHG_delta = 200;         
-	int16_t CHG_stop_delta = 150;    
-	int16_t REX_MINV = 3600;         
-	int16_t REX_delta = 200;         
-	int16_t REX_stop_delta = 150;    
-	uint8_t Balance_Interval = 100;  
-	uint8_t Max_Cells = 3; 
-	int16_t BLANCE_TIME[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+	uint16_t CB_ACTIVE_CELLS_bal;
+	uint16_t CB_SET_LVL_bal;
+	uint16_t Cell_active;
+	uint8_t Balancing_Config;
+	int16_t CHG_th;           
+	int16_t DSG_th;            
+	int16_t Min_Cell_Temp;     
+	int16_t Max_Cell_Temp;      
+	int16_t CHG_MINV;         
+	int16_t CHG_delta;         
+	int16_t CHG_stop_delta;    
+	int16_t REX_MINV;         
+	int16_t REX_delta;         
+	int16_t REX_stop_delta;    
+	uint8_t Balance_Interval;  
+	uint8_t Max_Cells;
+	static int16_t BLANCE_TIME[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 	
 	//初始化存储区域
 	if(!init_memory_success)//仅一次
@@ -988,7 +1023,24 @@ void BQ76952
 			    &SF_ALERT_MASKA,
 			   	&SF_ALERT_MASKB,
 			   	&SF_ALERT_MASKC,
-			   	&PF_ALERT_MASKA
+			   	&PF_ALERT_MASKA,
+				//均衡相關配置信息
+				&CB_ACTIVE_CELLS_bal,
+				&CB_SET_LVL_bal,
+				&Cell_active,
+				&Balancing_Config,
+				&CHG_th,           
+				&DSG_th,            
+				&Min_Cell_Temp,     
+				&Max_Cell_Temp,      
+				&CHG_MINV,         
+				&CHG_delta,         
+				&CHG_stop_delta,    
+				&REX_MINV,         
+				&REX_delta,         
+				&REX_stop_delta,    
+				&Balance_Interval,  
+				&Max_Cells 
 				);
 
 

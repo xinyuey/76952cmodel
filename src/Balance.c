@@ -96,12 +96,10 @@ typedef enum{
 Balance_StateMachine Bal_state = IDLE;
 
 
-uint16_t VC_min(uint16_t *CellVoltage,const uint16_t Cell_active)
+uint16_t VC_min(uint16_t *Cell_V,const uint16_t Cell_active)
 {
-    uint16_t min = *CellVoltage;
+    uint16_t min = *Cell_V;
     //printf("\n*****  cell_1 is %d   *****\n",min);
-    uint16_t *Cell_V;
-    Cell_V = CellVoltage;
     for (int i = 0; i < 16; i++)
     {
         if (Cell_active & (1 << i))
@@ -115,11 +113,9 @@ uint16_t VC_min(uint16_t *CellVoltage,const uint16_t Cell_active)
     }
     return min;
 }
-uint16_t VC_max(uint16_t *CellVoltage,const uint16_t Cell_active)
+uint16_t VC_max(uint16_t *Cell_V,const uint16_t Cell_active)
 {
-    uint16_t max = *CellVoltage;
-    uint16_t *Cell_V;
-    Cell_V = CellVoltage;
+    uint16_t max = *Cell_V;
     for (int i = 0; i < 16; i++)
     {
         if (Cell_active & (1 << i))
